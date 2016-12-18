@@ -26,34 +26,31 @@ public class DBHelper extends SQLiteOpenHelper {
     private SQLiteDatabase mDataBase;
     private final Context mContext;
 
+    //Konstruktor
     public DBHelper(Context context) {
         super(context, DB_NAME, null, 1);
         getDBPath(context);
         this.mContext = context;
     }
 
-    //U jinych verzi se databaze uklada jinam
+    //Úložiště databáze záleží na verzi Androidu
     private void getDBPath(Context context) {
         if (android.os.Build.VERSION.SDK_INT >= 17) {
-            this.DB_PATH = context.getApplicationInfo().dataDir + "/databases/";
+            DB_PATH = context.getApplicationInfo().dataDir + "/databases/";
         } else {
-            this.DB_PATH = "/data/data/" + context.getPackageName() + "/databases/";
+            DB_PATH = "/data/data/" + context.getPackageName() + "/databases/";
         }
-        Log.e(TAG, "Saving DB_PATH as " + DB_PATH);
     }
 
-    @Override
-    public void onCreate(SQLiteDatabase db) {
-    }
-
+    //Tvorba databaze
     public void createDataBase() throws IOException {
-        //If the database does not exist, copy it from the assets.
+        //Kopirujeme ji jen kdyz zatim neexistuje
         boolean mDataBaseExist = checkDataBase();
-        Log.e(TAG, "The database exists? " + String.valueOf(mDataBaseExist));
         if (!mDataBaseExist) {
+            Log.e(TAG, "The database doesn't exist - copying it from the assets.");
             this.getReadableDatabase();
+            //Samotne kopirovani
             try {
-                //Copy the database from assests
                 copyDataBase();
                 Log.e(TAG, "createDatabase database created");
             } catch (IOException mIOException) {
@@ -89,27 +86,19 @@ public class DBHelper extends SQLiteOpenHelper {
         Log.e(TAG, "Databaze " + myPath + " byla otevrena!");
     }
 
-    @Override
-    public synchronized void close() {
-        if (mDataBase != null)
-            mDataBase.close();
-        super.close();
-    }
-
-
-    @Override
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        Log.e(TAG, "(Ne)provadim upgrade");
-    }
-
-    public ArrayList<String> getAllData() {
-        ArrayList<String> arrayList = new ArrayList<>();
+    //Vyvoření arraylistu pro RecView
+    public ArrayList<Pisnicka> getAllData() {
+        ArrayList<Pisnicka> arrayList = new ArrayList<>();
         try {
             Cursor res = mDataBase.rawQuery("SELECT * from data", null);
             res.moveToFirst();
 
+            //Vytvorime ArrayList objektu pisnicek pro RecyclerView
             while (!res.isAfterLast()) {
-                arrayList.add(res.getString(res.getColumnIndex("nazev")));
+                Pisnicka pisnicka = new Pisnicka(res.getString(res.getColumnIndex("nazev")),
+                                res.getString(res.getColumnIndex("interpret")));
+
+                arrayList.add(pisnicka);
                 res.moveToNext();
             }
         } catch (Exception ex) {
@@ -118,4 +107,22 @@ public class DBHelper extends SQLiteOpenHelper {
         }
         return arrayList;
     }
+
+    @Override
+    public synchronized void close() {
+        if (mDataBase != null)
+            mDataBase.close();
+        super.close();
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+    }
+
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        Log.e(TAG, "(Ne)provadim upgrade");
+    }
+
 }
