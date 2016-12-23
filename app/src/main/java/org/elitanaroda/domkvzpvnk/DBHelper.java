@@ -19,12 +19,11 @@ import java.util.ArrayList;
  */
 
 public class DBHelper extends SQLiteOpenHelper {
-    private static String TAG = "ZpevnikHelper";
-
     public static final String DB_NAME = "data.db";
     public static String DB_PATH = "";
-    private SQLiteDatabase mDataBase;
+    private static String TAG = "ZpevnikHelper";
     private final Context mContext;
+    private SQLiteDatabase mDataBase;
 
     //Konstruktor
     public DBHelper(Context context) {
@@ -49,8 +48,8 @@ public class DBHelper extends SQLiteOpenHelper {
         if (!mDataBaseExist) {
             Log.e(TAG, "The database doesn't exist - copying it from the assets.");
             this.getReadableDatabase();
-            //Samotne kopirovani
             try {
+                //Copy the database from assests
                 copyDataBase();
                 Log.e(TAG, "createDatabase database created");
             } catch (IOException mIOException) {
@@ -86,7 +85,6 @@ public class DBHelper extends SQLiteOpenHelper {
         Log.e(TAG, "Databaze " + myPath + " byla otevrena!");
     }
 
-    //Vyvoření arraylistu pro RecView
     public ArrayList<Pisnicka> getAllData() {
         ArrayList<Pisnicka> arrayList = new ArrayList<>();
         try {

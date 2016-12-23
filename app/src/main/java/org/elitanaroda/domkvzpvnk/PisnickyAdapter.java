@@ -5,7 +5,9 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,45 +20,40 @@ import java.util.List;
 public class PisnickyAdapter extends
         RecyclerView.Adapter<PisnickyAdapter.ViewHolder> {
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        public TextView nazevTextView;
-        public TextView interpretTextView;
-
-
-        public ViewHolder(View itemView) {
-            super(itemView);
-            nazevTextView = (TextView) itemView.findViewById(R.id.nazev);
-            interpretTextView = (TextView) itemView.findViewById(R.id.interpret);
-        }
-    }
-
     private ArrayList<Pisnicka> mPisnicky;
     private Context mContext;
 
-    public PisnickyAdapter(Context context,ArrayList<Pisnicka> pisnicky)
-    {
-        this.mPisnicky=pisnicky;
-        this.mContext=context;
+
+    private OnItemClickListener listener;
+
+    public PisnickyAdapter(Context context, ArrayList<Pisnicka> pisnicky) {
+        this.mPisnicky = pisnicky;
+        this.mContext = context;
+    }
+
+    // Define the method that allows the parent activity or fragment to define the listener
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
     }
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        Context context=parent.getContext();
-        LayoutInflater inflater=LayoutInflater.from(context);
+        Context context = parent.getContext();
+        LayoutInflater inflater = LayoutInflater.from(context);
 
-        View pisnickaView=inflater.inflate(R.layout.item_pisnicka,parent,false);
+        View pisnickaView = inflater.inflate(R.layout.item_pisnicka, parent, false);
 
-        ViewHolder viewHolder=new ViewHolder(pisnickaView);
+        ViewHolder viewHolder = new ViewHolder(pisnickaView);
         return viewHolder;
     }
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        Pisnicka pisnicka=mPisnicky.get(position);
+        Pisnicka pisnicka = mPisnicky.get(position);
 
-        TextView nazev=holder.nazevTextView;
+        TextView nazev = holder.nazevTextView;
         nazev.setText(pisnicka.getmNazev());
-        TextView interpret=holder.interpretTextView;
+        TextView interpret = holder.interpretTextView;
         interpret.setText(pisnicka.getmInterpret());
     }
 
@@ -64,4 +61,35 @@ public class PisnickyAdapter extends
     public int getItemCount() {
         return mPisnicky.size();
     }
+
+    // Define the listener interface
+    public interface OnItemClickListener {
+        void onItemClick(View itemView);
+    }
+
+    public class ViewHolder extends RecyclerView.ViewHolder {
+        public TextView nazevTextView;
+        public TextView interpretTextView;
+
+        public ViewHolder(final View itemView) {
+            super(itemView);
+            this.nazevTextView = (TextView) itemView.findViewById(R.id.nazev);
+            this.interpretTextView = (TextView) itemView.findViewById(R.id.interpret);
+
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Triggers click upwards to the adapter on click
+                    if (listener != null) {
+                        int position = getAdapterPosition();
+                        if (position != RecyclerView.NO_POSITION) {
+                            listener.onItemClick(itemView);
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+
 }
