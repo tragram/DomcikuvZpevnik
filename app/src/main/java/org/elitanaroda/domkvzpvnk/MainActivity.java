@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
         seznamPisnicek.setAdapter(adapter);
         seznamPisnicek.setLayoutManager(new LinearLayoutManager(this));
         seznamPisnicek.setHasFixedSize(true);
+        seznamPisnicek.addItemDecoration(new SimpleDividerItemDecoration(this));
         SnapHelper snapHelper = new LinearSnapHelper();
         snapHelper.attachToRecyclerView(seznamPisnicek);
 
