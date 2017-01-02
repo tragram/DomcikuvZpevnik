@@ -5,29 +5,26 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Dominik on 06.12.2016.
  */
 
 
-public class PisnickyAdapter extends
-        RecyclerView.Adapter<PisnickyAdapter.ViewHolder> {
+public class SongsAdapter extends
+        RecyclerView.Adapter<SongsAdapter.ViewHolder> {
 
-    private ArrayList<Pisnicka> mPisnicky;
+    private ArrayList<Song> mSongs;
     private Context mContext;
 
 
     private OnItemClickListener listener;
 
-    public PisnickyAdapter(Context context, ArrayList<Pisnicka> pisnicky) {
-        this.mPisnicky = pisnicky;
+    public SongsAdapter(Context context, ArrayList<Song> songs) {
+        this.mSongs = songs;
         this.mContext = context;
     }
 
@@ -41,7 +38,7 @@ public class PisnickyAdapter extends
         Context context = parent.getContext();
         LayoutInflater inflater = LayoutInflater.from(context);
 
-        View pisnickaView = inflater.inflate(R.layout.item_pisnicka, parent, false);
+        View pisnickaView = inflater.inflate(R.layout.item_song, parent, false);
 
         ViewHolder viewHolder = new ViewHolder(pisnickaView);
         return viewHolder;
@@ -49,17 +46,17 @@ public class PisnickyAdapter extends
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        Pisnicka pisnicka = mPisnicky.get(position);
+        Song song = mSongs.get(position);
 
-        TextView nazev = holder.nazevTextView;
-        nazev.setText(pisnicka.getmNazev());
-        TextView interpret = holder.interpretTextView;
-        interpret.setText(pisnicka.getmInterpret());
+        TextView nazev = holder.titleTextView;
+        nazev.setText(song.getmTitle());
+        TextView interpret = holder.artistTextView;
+        interpret.setText(song.getmArtist());
     }
 
     @Override
     public int getItemCount() {
-        return mPisnicky.size();
+        return mSongs.size();
     }
 
     // Define the listener interface
@@ -68,13 +65,13 @@ public class PisnickyAdapter extends
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
-        public TextView nazevTextView;
-        public TextView interpretTextView;
+        public TextView titleTextView;
+        public TextView artistTextView;
 
         public ViewHolder(final View itemView) {
             super(itemView);
-            this.nazevTextView = (TextView) itemView.findViewById(R.id.nazev);
-            this.interpretTextView = (TextView) itemView.findViewById(R.id.interpret);
+            this.titleTextView = (TextView) itemView.findViewById(R.id.title);
+            this.artistTextView = (TextView) itemView.findViewById(R.id.artist);
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override

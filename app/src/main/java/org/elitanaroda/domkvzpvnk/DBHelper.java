@@ -85,20 +85,33 @@ public class DBHelper extends SQLiteOpenHelper {
         Log.e(TAG, "Databaze " + myPath + " byla otevrena!");
     }
 
-    public ArrayList<Pisnicka> getAllData() {
-        ArrayList<Pisnicka> arrayList = new ArrayList<>();
+    public ArrayList<Song> getAllData() {
+        ArrayList<Song> arrayList = new ArrayList<>();
         try {
             Cursor res = mDataBase.rawQuery("SELECT * from data", null);
             res.moveToFirst();
 
             //Vytvorime ArrayList objektu pisnicek pro RecyclerView
             while (!res.isAfterLast()) {
-                Pisnicka pisnicka = new Pisnicka(res.getString(res.getColumnIndex("nazev")),
-                                res.getString(res.getColumnIndex("interpret")));
+                /*Song song = new Song(
+                        res.getString(res.getColumnIndex("title")),
+                        res.getString(res.getColumnIndex("artist")),
+                        res.getInt(res.getColumnIndex("date")),
+                        res.getInt(res.getColumnIndex("language")),
+                        res.getInt(res.getColumnIndex("filetype"))
+                );*/
 
-                arrayList.add(pisnicka);
+                //dočasné
+                Song song = new Song(
+                        res.getString(res.getColumnIndex("nazev")),
+                        res.getString(res.getColumnIndex("interpret")),
+                        0,0,0
+                );
+
+                arrayList.add(song);
                 res.moveToNext();
             }
+            res.close();
         } catch (Exception ex) {
             ex.getMessage();
             Log.e(TAG, "tak to teda ne, vracim prazdny arraylist");

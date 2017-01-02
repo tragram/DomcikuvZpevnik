@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Domčíkův Zpěvník</string>
+    <string name="action_search">Hledat</string>
+    <string name="action_settings">Nastavení</string>
 </resources>
