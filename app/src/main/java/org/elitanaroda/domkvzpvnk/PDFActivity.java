@@ -25,12 +25,23 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
     private int pageNumber = 0;
     private Button mScrollButton;
     private Handler mScrollHandler;
+
+    //Posun obrazu
     private Runnable ScrollRunnable = new Runnable() {
         @Override
         public void run() {
             //pdfView.setPositionOffset(pdfView.getCurrentYOffset() + 0.05f);
-            pdfView.moveRelativeTo(0, -2);
-            mScrollHandler.postDelayed(this, 10);
+            pdfView.moveRelativeTo(0, -3);
+            mScrollHandler.postDelayed(this, 15);
+        }
+    };
+
+    //Doostření nových částí dokumentu
+    private Runnable RefreshPageRunnable = new Runnable() {
+        @Override
+        public void run() {
+            pdfView.loadPages();
+            mScrollHandler.postDelayed(this, 700);
         }
     };
 
@@ -48,6 +59,7 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
                     doScroll = true;
                     mScrollHandler = new Handler();
                     mScrollHandler.post(ScrollRunnable);
+                    mScrollHandler.postDelayed(RefreshPageRunnable, 500);
 
                 } else {
                     doScroll = false;
@@ -89,6 +101,10 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
     @Override
     public void onPause() {
         super.onPause();
-        mScrollHandler.removeCallbacks(ScrollRunnable);
+        try {
+            mScrollHandler.removeCallbacks(ScrollRunnable);
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage());
+        }
     }
 }

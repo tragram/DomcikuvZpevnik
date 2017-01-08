@@ -1,13 +1,19 @@
 package org.elitanaroda.domkvzpvnk;
 
 import android.content.Context;
+import android.support.v7.util.SortedList;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+import static android.content.ContentValues.TAG;
 
 /**
  * Created by Dominik on 06.12.2016.
@@ -17,15 +23,54 @@ import java.util.ArrayList;
 public class SongsAdapter extends
         RecyclerView.Adapter<SongsAdapter.ViewHolder> {
 
-    private ArrayList<Song> mSongs;
+    private final String TAG = "SongsAdapter";
+    private final Comparator<Song> mComparator;
+    //TODO: Improve these methods
+    private final SortedList.Callback<Song> mCallback = new SortedList.Callback<Song>() {
+        @Override
+        public boolean areContentsTheSame(Song oldItem, Song newItem) {
+            return oldItem.equals(newItem);
+        }
+
+        @Override
+        public int compare(Song o1, Song o2) {
+            return o1.getmArtist().compareTo(o2.getmArtist());
+        }
+
+        @Override
+        public void onChanged(int position, int count) {
+            notifyDataSetChanged();
+        }
+
+        @Override
+        public boolean areItemsTheSame(Song item1, Song item2) {
+            return item1.hashCode() == item2.hashCode();
+        }
+
+        @Override
+        public void onInserted(int position, int count) {
+            notifyDataSetChanged();
+        }
+
+        @Override
+        public void onRemoved(int position, int count) {
+            notifyDataSetChanged();
+        }
+
+        @Override
+        public void onMoved(int fromPosition, int toPosition) {
+            notifyDataSetChanged();
+        }
+    };
     private Context mContext;
-
-
     private OnItemClickListener listener;
+    private SortedList<Song> mSongs;
 
-    public SongsAdapter(Context context, ArrayList<Song> songs) {
-        this.mSongs = songs;
+    public SongsAdapter(Context context, Comparator<Song> comparator) {
+        //this.mSongs = songs;
         this.mContext = context;
+        this.mComparator = comparator;
+        mSongs = new SortedList<>(Song.class, mCallback);
     }
 
     // Define the method that allows the parent activity or fragment to define the listener
@@ -38,10 +83,43 @@ public class SongsAdapter extends
         Context context = parent.getContext();
         LayoutInflater inflater = LayoutInflater.from(context);
 
-        View pisnickaView = inflater.inflate(R.layout.item_song, parent, false);
+        View songView = inflater.inflate(R.layout.item_song, parent, false);
 
-        ViewHolder viewHolder = new ViewHolder(pisnickaView);
+        ViewHolder viewHolder = new ViewHolder(songView);
         return viewHolder;
+    }
+
+    public void add(Song song) {
+        mSongs.add(song);
+    }
+
+    public void remove(Song song) {
+        mSongs.remove(song);
+    }
+
+    public void add(List<Song> songs) {
+        mSongs.addAll(songs);
+    }
+
+    public void remove(List<Song> songs) {
+        mSongs.beginBatchedUpdates();
+        for (Song song : songs) {
+            mSongs.remove(song);
+        }
+        mSongs.endBatchedUpdates();
+    }
+
+    //Odstraní již neexistující a přidá nové
+    public void replaceAll(List<Song> songs) {
+        mSongs.beginBatchedUpdates();
+        for (int i = mSongs.size() - 1; i >= 0; i--) {
+            final Song song = mSongs.get(i);
+            if (!songs.contains(song)) {
+                mSongs.remove(song);
+            }
+        }
+        mSongs.addAll(songs);
+        mSongs.endBatchedUpdates();
     }
 
     @Override

@@ -46,12 +46,12 @@ public class DBHelper extends SQLiteOpenHelper {
         //Kopirujeme ji jen kdyz zatim neexistuje
         boolean mDataBaseExist = checkDataBase();
         if (!mDataBaseExist) {
-            Log.e(TAG, "The database doesn't exist - copying it from the assets.");
+            Log.i(TAG, "The database doesn't exist - copying it from the assets.");
             this.getReadableDatabase();
             try {
                 //Copy the database from assests
                 copyDataBase();
-                Log.e(TAG, "createDatabase database created");
+                Log.i(TAG, "createDatabase database created");
             } catch (IOException mIOException) {
                 throw new Error("ErrorCopyingDataBase");
             }
@@ -82,7 +82,7 @@ public class DBHelper extends SQLiteOpenHelper {
         //Open the database
         String myPath = DB_PATH + DB_NAME;
         mDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
-        Log.e(TAG, "Databaze " + myPath + " byla otevrena!");
+        Log.i(TAG, "Databaze " + myPath + " byla otevrena!");
     }
 
     public ArrayList<Song> getAllData() {
@@ -94,6 +94,7 @@ public class DBHelper extends SQLiteOpenHelper {
             //Vytvorime ArrayList objektu pisnicek pro RecyclerView
             while (!res.isAfterLast()) {
                 /*Song song = new Song(
+                        res.getString(res.getColumnIndex("id"),
                         res.getString(res.getColumnIndex("title")),
                         res.getString(res.getColumnIndex("artist")),
                         res.getInt(res.getColumnIndex("date")),
@@ -103,6 +104,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
                 //dočasné
                 Song song = new Song(
+                        0,
                         res.getString(res.getColumnIndex("nazev")),
                         res.getString(res.getColumnIndex("interpret")),
                         0,0,0
