@@ -19,7 +19,7 @@ import java.util.ArrayList;
  */
 
 public class DBHelper extends SQLiteOpenHelper {
-    public static final String DB_NAME = "data.db";
+    public static final String DB_NAME = "FinalDB.db";
     public static String DB_PATH = "";
     private static String TAG = "ZpevnikHelper";
     private final Context mContext;
@@ -88,26 +88,18 @@ public class DBHelper extends SQLiteOpenHelper {
     public ArrayList<Song> getAllData() {
         ArrayList<Song> arrayList = new ArrayList<>();
         try {
-            Cursor res = mDataBase.rawQuery("SELECT * from data", null);
+            Cursor res = mDataBase.rawQuery("SELECT * from Songs", null);
             res.moveToFirst();
 
             //Vytvorime ArrayList objektu pisnicek pro RecyclerView
             while (!res.isAfterLast()) {
-                /*Song song = new Song(
-                        res.getString(res.getColumnIndex("id"),
-                        res.getString(res.getColumnIndex("title")),
-                        res.getString(res.getColumnIndex("artist")),
-                        res.getInt(res.getColumnIndex("date")),
-                        res.getInt(res.getColumnIndex("language")),
-                        res.getInt(res.getColumnIndex("filetype"))
-                );*/
-
-                //dočasné
                 Song song = new Song(
-                        0,
-                        res.getString(res.getColumnIndex("nazev")),
-                        res.getString(res.getColumnIndex("interpret")),
-                        0,0,0
+                        res.getInt(0), //res.getColumnIndex("_id")
+                        res.getString(res.getColumnIndex("Title")),
+                        res.getString(res.getColumnIndex("Artist")),
+                        res.getInt(res.getColumnIndex("AddedOn")),
+                        res.getInt(res.getColumnIndex("Language")),
+                        res.getInt(res.getColumnIndex("hasGen"))
                 );
 
                 arrayList.add(song);

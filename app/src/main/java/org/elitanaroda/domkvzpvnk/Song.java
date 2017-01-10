@@ -1,5 +1,7 @@
 package org.elitanaroda.domkvzpvnk;
 
+import java.text.Normalizer;
+
 /**
  * Created by Dominik on 10.12.2016.
  */
@@ -10,17 +12,19 @@ public class Song {
     private String mArtist;
 
     private int mDateAdded;
-    private int mLanguge;
-    private int mFileTypes;
+    private byte mLanguage;
+    private boolean mHasPDFgen;
 
-
-    public Song(int id, String title, String artist, int dateAdded, int language, int fileTypes) {
+    public Song(int id, String title, String artist, int dateAdded, int language, int hasPDFgen) {
         this.mId = id;
         this.mTitle = title;
         this.mArtist = artist;
-        this.mDateAdded=dateAdded;
-        this.mLanguge = language;
-        this.mFileTypes=fileTypes;
+        this.mDateAdded = dateAdded;
+        this.mLanguage = ((byte) language);
+        if (hasPDFgen == 0)
+            this.mHasPDFgen = false;
+        else
+            this.mHasPDFgen = true;
     }
 
 
@@ -40,14 +44,26 @@ public class Song {
         return mDateAdded;
     }
 
-    public int getmFileTypes() {
-        return mFileTypes;
+    /*public boolean mHasPDFgen() {
+        return mHasPDFgen;
+    }*/
+
+    public int getmLanguage() {
+        return mLanguage;
     }
 
-    public int getmLanguge() {
-        return mLanguge;
+    public String getFileName() {
+        String fileName = this.mArtist + "_" + this.mTitle;
+        fileName = MainActivity.makeTextNiceAgain(fileName);
+        fileName = fileName.replace(" ", "_").replace(",", "");
+        if (mHasPDFgen) {
+            fileName += "-gen";
+        } else {
+            fileName += "-sken";
+        }
+        fileName += ".pdf";
+        return fileName;
     }
-
 
     //Vygenerované metody pro porovnávání objektů při řazení
     @Override
@@ -58,20 +74,9 @@ public class Song {
         Song song = (Song) o;
 
         if (mDateAdded != song.mDateAdded) return false;
-        if (mLanguge != song.mLanguge) return false;
-        if (mFileTypes != song.mFileTypes) return false;
+        if (mLanguage != song.mLanguage) return false;
+        if (mHasPDFgen != song.mHasPDFgen) return false;
         if (mTitle != null ? !mTitle.equals(song.mTitle) : song.mTitle != null) return false;
         return mArtist != null ? mArtist.equals(song.mArtist) : song.mArtist == null;
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = mTitle != null ? mTitle.hashCode() : 0;
-        result = 31 * result + (mArtist != null ? mArtist.hashCode() : 0);
-        result = 31 * result + mDateAdded;
-        result = 31 * result + mLanguge;
-        result = 31 * result + mFileTypes;
-        return result;
     }
 }

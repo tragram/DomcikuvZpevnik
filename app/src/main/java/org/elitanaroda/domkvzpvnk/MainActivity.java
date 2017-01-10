@@ -1,19 +1,17 @@
 package org.elitanaroda.domkvzpvnk;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.LinearSnapHelper;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
-import android.support.v7.widget.SnapHelper;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.View;
-
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import java.io.IOException;
 import java.text.Normalizer;
@@ -22,15 +20,32 @@ import java.util.Comparator;
 import java.util.List;
 
 
-import android.content.Intent;
-
+/*
+Global TODO:
+search in async
+download files
+material design
+search on youtube
+select autoscroll speed
+NFC send song
+zkulturnit kód
+*/
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener {
     private static final Comparator<Song> ALPHABETICAL_BY_TITLE = new Comparator<Song>() {
         @Override
         public int compare(Song o1, Song o2) {
-            return o1.getmTitle().compareTo(o2.getmTitle());
+            return Normalizer.normalize(o1.getmTitle(), Normalizer.Form.NFD).
+                    compareTo(Normalizer.normalize(o2.getmTitle(), Normalizer.Form.NFD));
         }
     };
+    private static final Comparator<Song> ALPHABETICAL_BY_ARTIST = new Comparator<Song>() {
+        @Override
+        public int compare(Song o1, Song o2) {
+            return Normalizer.normalize(o1.getmArtist(), Normalizer.Form.NFD).
+                    compareTo(Normalizer.normalize(o2.getmArtist(), Normalizer.Form.NFD));
+        }
+    };
+
     private static String TAG = "Main";
     private DBHelper mDBHelper;
     private RecyclerView songList;
@@ -95,8 +110,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         //Čekání na výběr písně uživatelem
         mAdapter.setOnItemClickListener(new SongsAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(View view) {
-                openPDFDocument(view);
+            public void onItemClick(View view, Song song) {
+                openPDFDocument(song);
             }
         });
     }
@@ -116,7 +131,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         return false;
     }
 
-    //TODO: Make it work on TextChange and not only on TextSubmit
     @Override
     public boolean onQueryTextChange(String newText) {
         final List<Song> filteredSongList = filter(mSongArrayList, newText);
@@ -127,9 +141,9 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     }
 
     //Spuštění aktivity se souborem
-    public void openPDFDocument(View view) {
+    public void openPDFDocument(Song song) {
         Intent intent = new Intent(this, PDFActivity.class);
-        intent.putExtra("nazevPisne", "zkouska.pdf");
+        intent.putExtra("fileName", song.getFileName());
         startActivity(intent);
     }
 

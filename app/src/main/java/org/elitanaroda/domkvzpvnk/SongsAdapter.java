@@ -34,7 +34,7 @@ public class SongsAdapter extends
 
         @Override
         public int compare(Song o1, Song o2) {
-            return o1.getmArtist().compareTo(o2.getmArtist());
+            return mComparator.compare(o1, o2);
         }
 
         @Override
@@ -44,22 +44,22 @@ public class SongsAdapter extends
 
         @Override
         public boolean areItemsTheSame(Song item1, Song item2) {
-            return item1.hashCode() == item2.hashCode();
+            return item1.getmId() == item2.getmId();
         }
 
         @Override
         public void onInserted(int position, int count) {
-            notifyDataSetChanged();
+            notifyItemRangeInserted(position, count);
         }
 
         @Override
         public void onRemoved(int position, int count) {
-            notifyDataSetChanged();
+            notifyItemRangeRemoved(position, count);
         }
 
         @Override
         public void onMoved(int fromPosition, int toPosition) {
-            notifyDataSetChanged();
+            notifyItemMoved(fromPosition, toPosition);
         }
     };
     private Context mContext;
@@ -71,22 +71,6 @@ public class SongsAdapter extends
         this.mContext = context;
         this.mComparator = comparator;
         mSongs = new SortedList<>(Song.class, mCallback);
-    }
-
-    // Define the method that allows the parent activity or fragment to define the listener
-    public void setOnItemClickListener(OnItemClickListener listener) {
-        this.listener = listener;
-    }
-
-    @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        Context context = parent.getContext();
-        LayoutInflater inflater = LayoutInflater.from(context);
-
-        View songView = inflater.inflate(R.layout.item_song, parent, false);
-
-        ViewHolder viewHolder = new ViewHolder(songView);
-        return viewHolder;
     }
 
     public void add(Song song) {
@@ -122,14 +106,30 @@ public class SongsAdapter extends
         mSongs.endBatchedUpdates();
     }
 
+    // Define the method that allows the parent activity or fragment to define the listener
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
+
+    @Override
+    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        Context context = parent.getContext();
+        LayoutInflater inflater = LayoutInflater.from(context);
+
+        View songView = inflater.inflate(R.layout.item_song, parent, false);
+
+        ViewHolder viewHolder = new ViewHolder(songView);
+        return viewHolder;
+    }
+
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         Song song = mSongs.get(position);
 
-        TextView nazev = holder.titleTextView;
-        nazev.setText(song.getmTitle());
-        TextView interpret = holder.artistTextView;
-        interpret.setText(song.getmArtist());
+        TextView title = holder.titleTextView;
+        title.setText(song.getmTitle());
+        TextView artist = holder.artistTextView;
+        artist.setText(song.getmArtist());
     }
 
     @Override
@@ -139,8 +139,9 @@ public class SongsAdapter extends
 
     // Define the listener interface
     public interface OnItemClickListener {
-        void onItemClick(View itemView);
+        void onItemClick(View itemView, Song song);
     }
+
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         public TextView titleTextView;
@@ -151,6 +152,7 @@ public class SongsAdapter extends
             this.titleTextView = (TextView) itemView.findViewById(R.id.title);
             this.artistTextView = (TextView) itemView.findViewById(R.id.artist);
 
+
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -158,7 +160,7 @@ public class SongsAdapter extends
                     if (listener != null) {
                         int position = getAdapterPosition();
                         if (position != RecyclerView.NO_POSITION) {
-                            listener.onItemClick(itemView);
+                            listener.onItemClick(itemView, mSongs.get(position));
                         }
                     }
                 }
