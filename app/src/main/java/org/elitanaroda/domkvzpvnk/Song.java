@@ -27,7 +27,6 @@ public class Song {
             this.mHasPDFgen = true;
     }
 
-
     public int getmId() {
         return mId;
     }
@@ -52,6 +51,8 @@ public class Song {
         return mLanguage;
     }
 
+
+    //vygenerování názvu PDF souboru
     public String getFileName() {
         String fileName = this.mArtist + "_" + this.mTitle;
         fileName = MainActivity.makeTextNiceAgain(fileName);

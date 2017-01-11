@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-
 /*
 Global TODO:
 search in async
@@ -30,7 +29,9 @@ select autoscroll speed
 NFC send song
 zkulturnit kód
 */
+
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener {
+    //Comparatory pro řazení písniček v seznamu
     private static final Comparator<Song> ALPHABETICAL_BY_TITLE = new Comparator<Song>() {
         @Override
         public int compare(Song o1, Song o2) {
@@ -45,14 +46,14 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                     compareTo(Normalizer.normalize(o2.getmArtist(), Normalizer.Form.NFD));
         }
     };
-
     private static String TAG = "Main";
     private DBHelper mDBHelper;
-    private RecyclerView songList;
+    private RecyclerView songListView;
     private Toolbar mToolbar;
     private SongsAdapter mAdapter;
-    private ArrayList<Song> mSongArrayList;
+    private List<Song> mSongArrayList;
 
+    //Vytvoření seznamu odpovídajícího hledání
     private static List<Song> filter(List<Song> songs, String query) {
         final String niceQuery = makeTextNiceAgain(query);
         Log.i(TAG, niceQuery);
@@ -65,11 +66,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                 Log.i(TAG, song.getmTitle());
             }
         }
-        String pisnicky = "";
-        for (Song song : filteredSongList) {
-            pisnicky += (song.getmTitle() + " ");
-        }
-        Log.i(TAG, "___" + pisnicky);
         return filteredSongList;
     }
 
@@ -83,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        songList = (RecyclerView) findViewById(R.id.Pisnicky);
+        songListView = (RecyclerView) findViewById(R.id.Pisnicky);
         mToolbar = (Toolbar) findViewById(R.id.mToolbar);
         setSupportActionBar(mToolbar);
 
@@ -100,12 +96,12 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         //Připnutí adapteru a nastavení jeho parametrů
         mAdapter = new SongsAdapter(this, ALPHABETICAL_BY_TITLE);
         mAdapter.add(mSongArrayList);
-        songList.setAdapter(mAdapter);
-        songList.setLayoutManager(new LinearLayoutManager(this));
-        songList.setHasFixedSize(true);
-        songList.addItemDecoration(new SimpleDividerItemDecoration(this));
+        songListView.setAdapter(mAdapter);
+        songListView.setLayoutManager(new LinearLayoutManager(this));
+        songListView.setHasFixedSize(true);
+        songListView.addItemDecoration(new SimpleDividerItemDecoration(this));
         //SnapHelper snapHelper = new LinearSnapHelper();
-        //snapHelper.attachToRecyclerView(songList);
+        //snapHelper.attachToRecyclerView(songListView);
 
         //Čekání na výběr písně uživatelem
         mAdapter.setOnItemClickListener(new SongsAdapter.OnItemClickListener() {

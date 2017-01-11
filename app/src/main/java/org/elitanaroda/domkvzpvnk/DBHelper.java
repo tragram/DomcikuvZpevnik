@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Dominik on 09.12.2016.
@@ -85,8 +86,8 @@ public class DBHelper extends SQLiteOpenHelper {
         Log.i(TAG, "Databaze " + myPath + " byla otevrena!");
     }
 
-    public ArrayList<Song> getAllData() {
-        ArrayList<Song> arrayList = new ArrayList<>();
+    public List<Song> getAllData() {
+        List<Song> arrayList = new ArrayList<>();
         try {
             Cursor res = mDataBase.rawQuery("SELECT * from Songs", null);
             res.moveToFirst();

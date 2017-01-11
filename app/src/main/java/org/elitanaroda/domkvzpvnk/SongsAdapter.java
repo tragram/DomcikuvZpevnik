@@ -73,14 +73,39 @@ public class SongsAdapter extends
         mSongs = new SortedList<>(Song.class, mCallback);
     }
 
-    public void add(Song song) {
-        mSongs.add(song);
+    // Define the method that allows the parent activity or fragment to define the listener
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
     }
 
-    public void remove(Song song) {
-        mSongs.remove(song);
+    @Override
+    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        Context context = parent.getContext();
+        LayoutInflater inflater = LayoutInflater.from(context);
+
+        View songView = inflater.inflate(R.layout.item_song, parent, false);
+
+        ViewHolder viewHolder = new ViewHolder(songView);
+        return viewHolder;
     }
 
+    //Inicializace jednotlivých řádků
+    @Override
+    public void onBindViewHolder(ViewHolder holder, int position) {
+        Song song = mSongs.get(position);
+
+        TextView title = holder.titleTextView;
+        title.setText(song.getmTitle());
+        TextView artist = holder.artistTextView;
+        artist.setText(song.getmArtist());
+    }
+
+    @Override
+    public int getItemCount() {
+        return mSongs.size();
+    }
+
+    //Zaplnění seznamu, přidá jen neexistující
     public void add(List<Song> songs) {
         mSongs.addAll(songs);
     }
@@ -106,42 +131,10 @@ public class SongsAdapter extends
         mSongs.endBatchedUpdates();
     }
 
-    // Define the method that allows the parent activity or fragment to define the listener
-    public void setOnItemClickListener(OnItemClickListener listener) {
-        this.listener = listener;
-    }
-
-    @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        Context context = parent.getContext();
-        LayoutInflater inflater = LayoutInflater.from(context);
-
-        View songView = inflater.inflate(R.layout.item_song, parent, false);
-
-        ViewHolder viewHolder = new ViewHolder(songView);
-        return viewHolder;
-    }
-
-    @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
-        Song song = mSongs.get(position);
-
-        TextView title = holder.titleTextView;
-        title.setText(song.getmTitle());
-        TextView artist = holder.artistTextView;
-        artist.setText(song.getmArtist());
-    }
-
-    @Override
-    public int getItemCount() {
-        return mSongs.size();
-    }
-
     // Define the listener interface
     public interface OnItemClickListener {
         void onItemClick(View itemView, Song song);
     }
-
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         public TextView titleTextView;

@@ -6,10 +6,10 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -31,14 +31,19 @@ import java.net.URLConnection;
 public class PDFActivity extends AppCompatActivity implements OnLoadCompleteListener {
     private static String TAG = "PDFViewActivity";
     private final String PDF_DIR = "http://elitanaroda.org/zpevnik/pdfs/";
-    private boolean doScroll = false;
+
+    //PDF variables
     private PDFView pdfView;
-    private String pdfFileName;
     private int pageNumber = 0;
+    private String pdfFileName;
+    private File mSongFile;
+
+    //Scrolling variables
+    private boolean doScroll = false;
     private Button mScrollButton;
     private Handler mScrollHandler;
+
     private ProgressDialog mProgressDialog;
-    private File mSongFile;
 
     //Posun obrazu
     private Runnable ScrollRunnable = new Runnable() {
@@ -62,10 +67,12 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //Inicializace UI
         setContentView(R.layout.activity_pdfview);
         pdfView = (PDFView) findViewById(R.id.pdfView);
-
         mScrollButton = (Button) findViewById(R.id.scrollButton);
+
         mScrollButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -81,32 +88,40 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
                 }
             }
         });
+
+        //Get file location
         Intent intent = getIntent();
         pdfFileName = intent.getStringExtra("fileName");
-        //displayFromAsset(SAMPLE_FILE);
         mSongFile = new File(this.getFilesDir().getAbsolutePath() + File.separatorChar + pdfFileName);
 
-        mProgressDialog = new ProgressDialog(PDFActivity.this);
-        mProgressDialog.setMessage("Downloading");
-        mProgressDialog.setIndeterminate(true);
-        mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        mProgressDialog.setCancelable(true);
-
-        ConnectivityManager cm =
-                (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-
-        final DownloadTask downloadTask = new DownloadTask(PDFActivity.this);
+        //Pokud už máme soubor, není nutné ho znovu stahovat
         if (mSongFile.exists()) {
             displayFromFile(mSongFile);
             Log.i(TAG, "File Exists");
-        } else if ((activeNetwork != null && activeNetwork.isConnectedOrConnecting()))
+        } else if (hasInternetConnection()) {
+            //Show the download progress popup
+            mProgressDialog = new ProgressDialog(PDFActivity.this);
+            mProgressDialog.setMessage("Downloading");
+            mProgressDialog.setIndeterminate(true);
+            mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            mProgressDialog.setCancelable(true);
+            final DownloadTask downloadTask = new DownloadTask(PDFActivity.this);
             downloadTask.execute(PDF_DIR + pdfFileName);
-        else
-            Toast.makeText(this, "No Internet Connection. File not available on local storage",
+        } else
+            Toast.makeText(this, "No Internet Connection. File not available on local storage, sorry.",
                     Toast.LENGTH_LONG).show();
     }
 
+    //Checks if there's internet connection, returns true when there is
+    private boolean hasInternetConnection() {
+        ConnectivityManager cm =
+                (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        if (activeNetwork != null && activeNetwork.isConnectedOrConnecting()) {
+            return true;
+        } else
+            return false;
+    }
 
     //Načtení konkrétního souboru
     private void displayFromFile(File file) {
@@ -119,7 +134,7 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
                 .load();
     }
 
-    //Původní verze
+    /*//Načtení souboru z assetu
     private void displayFromAsset(String assetFileName) {
         pdfFileName = assetFileName;
 
@@ -129,29 +144,32 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
                 .onLoad(this)
                 .scrollHandle(new DefaultScrollHandle(this))
                 .load();
-    }
+    }*/
 
     @Override
     public void loadComplete(int nbPages) {
     }
-
+/*
+    //Obnovit scrollování a refresh
     @Override
     public void onResume() {
         super.onResume();
-        if (doScroll)
+        if (doScroll) {
             mScrollHandler.post(ScrollRunnable);
-    }
+            mScrollHandler.postDelayed(RefreshPageRunnable, 700);
+        }
 
+    }*/
+
+    //Při pauze programu nechceme dál scrollovat a refreshovat
     @Override
     public void onPause() {
         super.onPause();
-        try {
-            mScrollHandler.removeCallbacks(ScrollRunnable);
-        } catch (Exception e) {
-            Log.e(TAG, e.getMessage());
-        }
+        if (doScroll)
+            mScrollHandler.removeCallbacks(ScrollRunnable, RefreshPageRunnable);
     }
 
+    //Stará se o stahování souboru
     private class DownloadTask extends AsyncTask<String, Integer, String> {
         private Context context;
         private PowerManager.WakeLock mWakeLock;
@@ -163,7 +181,7 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            // take CPU lock to prevent CPU from going off if the user presses the power button during download
+            // při vypnutí obrazovky chceme dostahovat soubor, teprve pak může jít CPU chrupkat
             PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
             mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                     getClass().getName());
@@ -174,12 +192,13 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
         @Override
         protected void onProgressUpdate(Integer... progress) {
             super.onProgressUpdate(progress);
-            // if we get here, length is known, now set indeterminate to false
+            // v této chvíli již máme délku progressbaru
             mProgressDialog.setIndeterminate(false);
             mProgressDialog.setMax(100);
             mProgressDialog.setProgress(progress[0]);
         }
 
+        //pustit wakelock, zrušit popup a načíst soubor
         @Override
         protected void onPostExecute(String result) {
             mWakeLock.release();
@@ -201,16 +220,13 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
                 Log.i(TAG, url.toString());
                 connection = url.openConnection();
                 connection.connect();
-                /*
-                // expect HTTP 200 OK, so we don't mistakenly save error report
-                // instead of the file
+                /* kód pro httpurlconnection, ověření odpovědi 200, aby se neuložil error
                 if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
                     return "Server returned HTTP " + connection.getResponseCode()
                             + " " + connection.getResponseMessage();
                 }*/
 
-                // this will be useful to display download percentage
-                // might be -1: server did not report the length
+                //pro výpočet % stažených
                 int fileLength = connection.getContentLength();
 
                 // download the file
@@ -227,7 +243,7 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
                         return null;
                     }
                     total += count;
-                    // publishing the progress....
+                    // publishing the progress...
                     if (fileLength > 0) // only if total length is known
                         publishProgress((int) (total * 100 / fileLength));
                     output.write(data, 0, count);
@@ -241,10 +257,11 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
                     if (input != null)
                         input.close();
                 } catch (IOException ignored) {
+                    Log.e(TAG, ignored.getMessage());
                 }
 
-                //if (connection != null)
-                //connection.disconnect();
+                /*if (connection != null)
+                connection.disconnect();*/
             }
             return null;
         }

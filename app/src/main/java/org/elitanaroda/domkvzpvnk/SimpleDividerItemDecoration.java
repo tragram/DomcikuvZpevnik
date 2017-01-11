@@ -11,7 +11,7 @@ import android.view.View;
  * Created by Dominik on 12/24/2016.
  */
 
-//Slouží k čárkám v RecycleView
+//Slouží k čárkám v RecycleView, v zásadě nic zajímavýho
 public class SimpleDividerItemDecoration extends RecyclerView.ItemDecoration {
     private Drawable mDivider;
 
