@@ -12,11 +12,12 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
+import android.widget.RelativeLayout;
 
 import com.github.barteksc.pdfviewer.PDFView;
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
@@ -47,6 +48,8 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
     private Handler mScrollHandler;
     private Context mContext;
 
+    private RelativeLayout rl;
+
     //Posun obrazu
     private Runnable ScrollRunnable = new Runnable() {
         @Override
@@ -70,13 +73,13 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.mContext = getApplicationContext();
-
+        rl = (RelativeLayout) findViewById(R.id.pdfView);
         //Inicializace UI
         setContentView(R.layout.activity_pdfview);
         pdfView = (PDFView) findViewById(R.id.pdfView);
-        mScrollButton = (Button) findViewById(R.id.scrollButton);
+        //mScrollButton = (Button) findViewById(R.id.scrollButton);
 
-        mScrollButton.setOnClickListener(new View.OnClickListener() {
+        /*mScrollButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!doScroll) {
@@ -90,7 +93,7 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
                     mScrollHandler.removeCallbacks(ScrollRunnable);
                 }
             }
-        });
+        });*/
 
         //Get file location
         Intent intent = getIntent();
@@ -104,9 +107,12 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
         } else if (hasInternetConnection()) {
             final DownloadTask downloadTask = new DownloadTask(PDFActivity.this);
             downloadTask.execute(PDF_DIR + pdfFileName);
-        } else
-            Toast.makeText(this, "No Internet Connection. File not available on local storage, sorry.",
-                    Toast.LENGTH_LONG).show();
+        } else {
+            Snackbar snackbar = Snackbar
+                    .make(findViewById(android.R.id.content), "No Internet Connection. File not available on local storage, sorry.",
+                            Snackbar.LENGTH_LONG);
+            snackbar.show();
+        }
     }
 
     //Checks if there's internet connection, returns true when there is
@@ -205,11 +211,23 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
         @Override
         protected void onPostExecute(String result) {
             mWakeLock.release();
-            if (result != null)
-                Toast.makeText(context, "Download error: " + result, Toast.LENGTH_LONG).show();
-            else
-                Toast.makeText(context, "File downloaded", Toast.LENGTH_SHORT).show();
-            displayFromFile(mSongFile);
+            if (result != null) {
+                Snackbar snackbar = Snackbar
+                        .make(findViewById(android.R.id.content), "Download error: " + result, Snackbar.LENGTH_LONG)
+                        .setAction("RETRY", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                final DownloadTask downloadTask = new DownloadTask(PDFActivity.this);
+                                downloadTask.execute(PDF_DIR + pdfFileName);
+                            }
+                        });
+                snackbar.show();
+            } else {
+                Snackbar snackbar = Snackbar
+                        .make(findViewById(android.R.id.content), "File downloaded!", Snackbar.LENGTH_LONG);
+                snackbar.show();
+                displayFromFile(mSongFile);
+            }
             //TODO: Close the fragment
         }
 
