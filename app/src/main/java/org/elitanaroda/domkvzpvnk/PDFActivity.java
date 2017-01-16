@@ -1,6 +1,9 @@
 package org.elitanaroda.domkvzpvnk;
 
-import android.app.ProgressDialog;
+import android.app.DialogFragment;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -25,8 +28,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 
 public class PDFActivity extends AppCompatActivity implements OnLoadCompleteListener {
     private static String TAG = "PDFViewActivity";
@@ -42,8 +45,7 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
     private boolean doScroll = false;
     private Button mScrollButton;
     private Handler mScrollHandler;
-
-    private ProgressDialog mProgressDialog;
+    private Context mContext;
 
     //Posun obrazu
     private Runnable ScrollRunnable = new Runnable() {
@@ -67,6 +69,7 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.mContext = getApplicationContext();
 
         //Inicializace UI
         setContentView(R.layout.activity_pdfview);
@@ -99,12 +102,6 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
             displayFromFile(mSongFile);
             Log.i(TAG, "File Exists");
         } else if (hasInternetConnection()) {
-            //Show the download progress popup
-            mProgressDialog = new ProgressDialog(PDFActivity.this);
-            mProgressDialog.setMessage("Downloading");
-            mProgressDialog.setIndeterminate(true);
-            mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            mProgressDialog.setCancelable(true);
             final DownloadTask downloadTask = new DownloadTask(PDFActivity.this);
             downloadTask.execute(PDF_DIR + pdfFileName);
         } else
@@ -149,7 +146,7 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
     @Override
     public void loadComplete(int nbPages) {
     }
-/*
+
     //Obnovit scrollování a refresh
     @Override
     public void onResume() {
@@ -159,14 +156,22 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
             mScrollHandler.postDelayed(RefreshPageRunnable, 700);
         }
 
-    }*/
+    }
 
-    //Při pauze programu nechceme dál scrollovat a refreshovat
+    //nechceme dál scrollovat a refreshovat
     @Override
-    public void onPause() {
+    public void onStop() {
         super.onPause();
         if (doScroll)
             mScrollHandler.removeCallbacks(ScrollRunnable, RefreshPageRunnable);
+    }
+
+    private void showDialog() {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .add(R.id.activity_pdfview, DownloadingFragment.newInstance(), "loadingfragment")
+                .commit();
+        Log.e(TAG, "Dialog called");
     }
 
     //Stará se o stahování souboru
@@ -186,45 +191,44 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
             mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                     getClass().getName());
             mWakeLock.acquire();
-            mProgressDialog.show();
+            //TODO: Zavolat fragment
+            //showDialog();
         }
 
         @Override
         protected void onProgressUpdate(Integer... progress) {
             super.onProgressUpdate(progress);
-            // v této chvíli již máme délku progressbaru
-            mProgressDialog.setIndeterminate(false);
-            mProgressDialog.setMax(100);
-            mProgressDialog.setProgress(progress[0]);
+            //TODO: Update the fragment
         }
 
-        //pustit wakelock, zrušit popup a načíst soubor
+        //pustit wakelock a načíst soubor
         @Override
         protected void onPostExecute(String result) {
             mWakeLock.release();
-            mProgressDialog.dismiss();
             if (result != null)
                 Toast.makeText(context, "Download error: " + result, Toast.LENGTH_LONG).show();
             else
                 Toast.makeText(context, "File downloaded", Toast.LENGTH_SHORT).show();
             displayFromFile(mSongFile);
+            //TODO: Close the fragment
         }
 
         @Override
         protected String doInBackground(String... params) {
             InputStream input = null;
             OutputStream output = null;
-            URLConnection connection = null;
+            HttpURLConnection connection = null;
             try {
                 URL url = new URL(params[0]);
                 Log.i(TAG, url.toString());
-                connection = url.openConnection();
+                connection = (HttpURLConnection) url.openConnection();
                 connection.connect();
-                /* kód pro httpurlconnection, ověření odpovědi 200, aby se neuložil error
+
+                // ověření odpovědi 200, aby se neuložil error
                 if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
                     return "Server returned HTTP " + connection.getResponseCode()
                             + " " + connection.getResponseMessage();
-                }*/
+                }
 
                 //pro výpočet % stažených
                 int fileLength = connection.getContentLength();
@@ -260,8 +264,8 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
                     Log.e(TAG, ignored.getMessage());
                 }
 
-                /*if (connection != null)
-                connection.disconnect();*/
+                if (connection != null)
+                    connection.disconnect();
             }
             return null;
         }

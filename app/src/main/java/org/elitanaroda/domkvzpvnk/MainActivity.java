@@ -1,6 +1,7 @@
 package org.elitanaroda.domkvzpvnk;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -27,7 +28,7 @@ material design
 search on youtube
 select autoscroll speed
 NFC send song
-zkulturnit kód
+hlavolam.hasGen=true, navíc není vůbec sken ani u drobné paralely, el condor pasa, chci zas v tobě spát je pochybný
 */
 
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener {
@@ -51,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private RecyclerView songListView;
     private Toolbar mToolbar;
     private SongsAdapter mAdapter;
-    private List<Song> mSongArrayList;
+    private List<Song> mSongList;
 
     //Vytvoření seznamu odpovídajícího hledání
     private static List<Song> filter(List<Song> songs, String query) {
@@ -79,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        songListView = (RecyclerView) findViewById(R.id.Pisnicky);
+        songListView = (RecyclerView) findViewById(R.id.SongRView);
         mToolbar = (Toolbar) findViewById(R.id.mToolbar);
         setSupportActionBar(mToolbar);
 
@@ -91,11 +92,11 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             io.getMessage();
         }
         mDBHelper.openDataBase();
-        mSongArrayList = mDBHelper.getAllData();
+        mSongList = mDBHelper.getAllData();
 
         //Připnutí adapteru a nastavení jeho parametrů
         mAdapter = new SongsAdapter(this, ALPHABETICAL_BY_TITLE);
-        mAdapter.add(mSongArrayList);
+        mAdapter.add(mSongList);
         songListView.setAdapter(mAdapter);
         songListView.setLayoutManager(new LinearLayoutManager(this));
         songListView.setHasFixedSize(true);
@@ -129,10 +130,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     @Override
     public boolean onQueryTextChange(String newText) {
-        final List<Song> filteredSongList = filter(mSongArrayList, newText);
-        //mAdapter.clear();
-        mAdapter.replaceAll(filteredSongList);
-        //TODO: Scroll to position 0
+        FilterDatList filterDatList = new FilterDatList();
+        filterDatList.execute(newText);
         return true;
     }
 
@@ -143,5 +142,19 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         startActivity(intent);
     }
 
+    private class FilterDatList extends AsyncTask<String, Void, List<Song>> {
+        @Override
+        protected List<Song> doInBackground(String... params) {
+            final List<Song> filteredSongList = filter(mSongList, params[0]);
+            return filteredSongList;
+        }
+
+        @Override
+        protected void onPostExecute(List<Song> filteredSongList) {
+            super.onPostExecute(filteredSongList);
+            mAdapter.replaceAll(filteredSongList);
+            songListView.scrollToPosition(0);
+        }
+    }
 }
 

@@ -6,5 +6,5 @@
         android:width="1dp"
         android:height="1dp" />
 
-    <solid android:color="@color/common_signin_btn_dark_text_disabled" />
+    <solid android:color="@color/colorPrimaryDark"/>
 </shape>
