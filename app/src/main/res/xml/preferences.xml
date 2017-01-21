@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="keepFiles"
+        android:summary="Checking this will not destroy your data plan. ;)"
+        android:title="Keep files"/>
+    <Preference
+        android:key="plsDownloadAll"
+        android:summary="This will download everything from the database"
+        android:title="I will not have internet"/>
+</PreferenceScreen>

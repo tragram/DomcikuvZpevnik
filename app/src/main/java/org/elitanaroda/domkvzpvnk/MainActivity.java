@@ -92,23 +92,30 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             io.getMessage();
         }
         mDBHelper.openDataBase();
-        mSongList = mDBHelper.getAllData();
+        mSongList = mDBHelper.getAllSongs();
 
-        //Připnutí adapteru a nastavení jeho parametrů
-        mAdapter = new SongsAdapter(this, ALPHABETICAL_BY_TITLE);
-        mAdapter.add(mSongList);
-        songListView.setAdapter(mAdapter);
+        LoadSongsList(ALPHABETICAL_BY_TITLE);
+
         songListView.setLayoutManager(new LinearLayoutManager(this));
         songListView.setHasFixedSize(true);
         songListView.addItemDecoration(new SimpleDividerItemDecoration(this));
         //SnapHelper snapHelper = new LinearSnapHelper();
         //snapHelper.attachToRecyclerView(songListView);
 
+    }
+
+    private void LoadSongsList(Comparator<Song> songComparator) {
+        mAdapter = new SongsAdapter(this, songComparator);
+        mAdapter.add(mSongList);
+        songListView.setAdapter(mAdapter);
         //Čekání na výběr písně uživatelem
         mAdapter.setOnItemClickListener(new SongsAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View view, Song song) {
-                openPDFDocument(song);
+                if (view.getId() != R.id.YTButton) {
+                    openPDFDocument(song);
+                } else
+                    openYoutube(song.getmArtist() + " - " + song.getmTitle());
             }
         });
     }
@@ -127,8 +134,13 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_settings:
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.content, new SettingsFragment())
+                        .addToBackStack("SettingsFragment")
+                        .commit();
                 return true;
             case R.id.sortBy:
+                LoadSongsList(ALPHABETICAL_BY_ARTIST);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -151,6 +163,15 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     public void openPDFDocument(Song song) {
         Intent intent = new Intent(this, PDFActivity.class);
         intent.putExtra("fileName", song.getFileName());
+        startActivity(intent);
+    }
+
+    public void openYoutube(String song) {
+        //TODO: Funguje to pochybně
+        Intent intent = new Intent(Intent.ACTION_SEARCH);
+        intent.setPackage("com.google.android.youtube");
+        intent.putExtra("query", song);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
     }
 

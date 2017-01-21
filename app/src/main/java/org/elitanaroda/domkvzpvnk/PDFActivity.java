@@ -6,12 +6,15 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -32,6 +35,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import static android.os.Environment.MEDIA_MOUNTED;
+
 public class PDFActivity extends AppCompatActivity implements OnLoadCompleteListener {
     private static String TAG = "PDFViewActivity";
     private final String PDF_DIR = "http://elitanaroda.org/zpevnik/pdfs/";
@@ -48,7 +53,6 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
     private Handler mScrollHandler;
     private Context mContext;
 
-    private RelativeLayout rl;
 
     //Posun obrazu
     private Runnable ScrollRunnable = new Runnable() {
@@ -73,7 +77,6 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.mContext = getApplicationContext();
-        rl = (RelativeLayout) findViewById(R.id.pdfView);
         //Inicializace UI
         setContentView(R.layout.activity_pdfview);
         pdfView = (PDFView) findViewById(R.id.pdfView);
@@ -98,7 +101,10 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
         //Get file location
         Intent intent = getIntent();
         pdfFileName = intent.getStringExtra("fileName");
-        mSongFile = new File(this.getFilesDir().getAbsolutePath() + File.separatorChar + pdfFileName);
+        if (Environment.getExternalStorageState() == MEDIA_MOUNTED) {
+            mSongFile = new File(Environment.getExternalStorageDirectory().toString() + File.separator + "Domčíkuv Zpěvník", pdfFileName);
+        } else
+            mSongFile = new File(this.getFilesDir().getAbsolutePath() + File.separatorChar + pdfFileName);
 
         //Pokud už máme soubor, není nutné ho znovu stahovat
         if (mSongFile.exists()) {
@@ -109,7 +115,7 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
             downloadTask.execute(PDF_DIR + pdfFileName);
         } else {
             Snackbar snackbar = Snackbar
-                    .make(findViewById(android.R.id.content), "No Internet Connection. File not available on local storage, sorry.",
+                    .make(findViewById(android.R.id.content), "No Internet Connection. \n File not available on local storage, sorry.",
                             Snackbar.LENGTH_LONG);
             snackbar.show();
         }
@@ -135,6 +141,14 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
                 .onLoad(this)
                 .scrollHandle(new DefaultScrollHandle(this))
                 .load();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        if (!sharedPref.getBoolean("keepFiles", true))
+            deleteFile(mSongFile.getName());
     }
 
     /*//Načtení souboru z assetu
@@ -180,6 +194,7 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
         Log.e(TAG, "Dialog called");
     }
 
+
     //Stará se o stahování souboru
     private class DownloadTask extends AsyncTask<String, Integer, String> {
         private Context context;
@@ -213,7 +228,7 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
             mWakeLock.release();
             if (result != null) {
                 Snackbar snackbar = Snackbar
-                        .make(findViewById(android.R.id.content), "Download error: " + result, Snackbar.LENGTH_LONG)
+                        .make(findViewById(android.R.id.content), "Download error:\n" + result, Snackbar.LENGTH_LONG)
                         .setAction("RETRY", new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {

@@ -86,32 +86,37 @@ public class DBHelper extends SQLiteOpenHelper {
         Log.i(TAG, "Databaze " + myPath + " byla otevrena!");
     }
 
-    public List<Song> getAllData() {
-        List<Song> arrayList = new ArrayList<>();
+    public List<Song> getAllSongs() {
+        List<Song> arrayListSongs = new ArrayList<>();
         try {
             Cursor res = mDataBase.rawQuery("SELECT * from Songs", null);
             res.moveToFirst();
 
             //Vytvorime ArrayList objektu pisnicek pro RecyclerView
+            int titleColumn = res.getColumnIndex("Title");
+            int artistColumn = res.getColumnIndex("Artist");
+            int addedOnColumn = res.getColumnIndex("AddedOn");
+            int languageColumn = res.getColumnIndex("Language");
+            int hasGenColumn = res.getColumnIndex("hasGen");
+
             while (!res.isAfterLast()) {
                 Song song = new Song(
                         res.getInt(0), //res.getColumnIndex("_id")
-                        res.getString(res.getColumnIndex("Title")),
-                        res.getString(res.getColumnIndex("Artist")),
-                        res.getInt(res.getColumnIndex("AddedOn")),
-                        res.getInt(res.getColumnIndex("Language")),
-                        res.getInt(res.getColumnIndex("hasGen"))
+                        res.getString(titleColumn),
+                        res.getString(artistColumn),
+                        res.getInt(addedOnColumn),
+                        res.getInt(languageColumn),
+                        res.getInt(hasGenColumn)
                 );
 
-                arrayList.add(song);
+                arrayListSongs.add(song);
                 res.moveToNext();
             }
             res.close();
         } catch (Exception ex) {
-            ex.getMessage();
-            Log.e(TAG, "tak to teda ne, vracim prazdny arraylist");
+            Log.e(TAG, ex.toString());
         }
-        return arrayList;
+        return arrayListSongs;
     }
 
     @Override

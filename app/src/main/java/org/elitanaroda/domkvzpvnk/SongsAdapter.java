@@ -1,12 +1,21 @@
 package org.elitanaroda.domkvzpvnk;
 
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.VectorDrawable;
+import android.support.graphics.drawable.VectorDrawableCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.util.SortedList;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -25,6 +34,7 @@ public class SongsAdapter extends
 
     private final String TAG = "SongsAdapter";
     private final Comparator<Song> mComparator;
+
     //TODO: Improve these methods
     private final SortedList.Callback<Song> mCallback = new SortedList.Callback<Song>() {
         @Override
@@ -98,7 +108,9 @@ public class SongsAdapter extends
         title.setText(song.getmTitle());
         TextView artist = holder.artistTextView;
         artist.setText(song.getmArtist());
+        ImageButton YTButton = holder.YTButton;
     }
+
 
     @Override
     public int getItemCount() {
@@ -139,12 +151,25 @@ public class SongsAdapter extends
     public class ViewHolder extends RecyclerView.ViewHolder {
         public TextView titleTextView;
         public TextView artistTextView;
+        public ImageButton YTButton;
 
         public ViewHolder(final View itemView) {
             super(itemView);
             this.titleTextView = (TextView) itemView.findViewById(R.id.title);
             this.artistTextView = (TextView) itemView.findViewById(R.id.artist);
+            this.YTButton = (ImageButton) itemView.findViewById(R.id.YTButton);
 
+            YTButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (listener != null) {
+                        int position = getAdapterPosition();
+                        if (position != RecyclerView.NO_POSITION) {
+                            listener.onItemClick(YTButton, mSongs.get(position));
+                        }
+                    }
+                }
+            });
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
