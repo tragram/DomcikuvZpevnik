@@ -39,21 +39,17 @@ import static android.os.Environment.MEDIA_MOUNTED;
 
 public class PDFActivity extends AppCompatActivity implements OnLoadCompleteListener {
     private static String TAG = "PDFViewActivity";
-    private final String PDF_DIR = "http://elitanaroda.org/zpevnik/pdfs/";
 
     //PDF variables
     private PDFView pdfView;
     private int pageNumber = 0;
     private String pdfFileName;
     private File mSongFile;
-
     //Scrolling variables
     private boolean doScroll = false;
     private Button mScrollButton;
     private Handler mScrollHandler;
     private Context mContext;
-
-
     //Posun obrazu
     private Runnable ScrollRunnable = new Runnable() {
         @Override
@@ -63,7 +59,6 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
             mScrollHandler.postDelayed(this, 15);
         }
     };
-
     //Doostření nových částí dokumentu
     private Runnable RefreshPageRunnable = new Runnable() {
         @Override
@@ -72,6 +67,10 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
             mScrollHandler.postDelayed(this, 700);
         }
     };
+
+    public File getmSongFile() {
+        return mSongFile;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,7 +101,8 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
         Intent intent = getIntent();
         pdfFileName = intent.getStringExtra("fileName");
         if (Environment.getExternalStorageState() == MEDIA_MOUNTED) {
-            mSongFile = new File(Environment.getExternalStorageDirectory().toString() + File.separator + "Domčíkuv Zpěvník", pdfFileName);
+            mSongFile = new File(Environment.getExternalStorageDirectory().toString()
+                    + File.separator + "Domčíkuv Zpěvník", pdfFileName);
         } else
             mSongFile = new File(this.getFilesDir().getAbsolutePath() + File.separatorChar + pdfFileName);
 
@@ -111,12 +111,15 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
             displayFromFile(mSongFile);
             Log.i(TAG, "File Exists");
         } else if (hasInternetConnection()) {
-            final DownloadTask downloadTask = new DownloadTask(PDFActivity.this);
-            downloadTask.execute(PDF_DIR + pdfFileName);
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .add(R.id.activity_pdfview, DownloadingFragment
+                            .newInstance(pdfFileName, mSongFile.getAbsolutePath()), "loadingfragment")
+                    .commit();
         } else {
             Snackbar snackbar = Snackbar
-                    .make(findViewById(android.R.id.content), "No Internet Connection. \n File not available on local storage, sorry.",
-                            Snackbar.LENGTH_LONG);
+                    .make(findViewById(android.R.id.content), "No Internet Connection. \n " +
+                            "File not available on local storage, sorry.", Snackbar.LENGTH_LONG);
             snackbar.show();
         }
     }
@@ -133,13 +136,22 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
     }
 
     //Načtení konkrétního souboru
-    private void displayFromFile(File file) {
+    public void displayFromFile(File file) {
         Log.i(TAG, file.getAbsolutePath());
         pdfView.fromFile(file)
                 .defaultPage(pageNumber)
                 .enableAnnotationRendering(true)
                 .onLoad(this)
                 .scrollHandle(new DefaultScrollHandle(this))
+                .onLoad(new OnLoadCompleteListener() {
+                    @Override
+                    public void loadComplete(int nbPages) {
+                        if (getSupportFragmentManager().findFragmentByTag("loadingfragment") != null)
+                            getSupportFragmentManager().beginTransaction()
+                                    .remove(getSupportFragmentManager()
+                                            .findFragmentByTag("loadingfragment")).commit();
+                    }
+                })
                 .load();
     }
 
@@ -184,123 +196,5 @@ public class PDFActivity extends AppCompatActivity implements OnLoadCompleteList
         super.onPause();
         if (doScroll)
             mScrollHandler.removeCallbacks(ScrollRunnable, RefreshPageRunnable);
-    }
-
-    private void showDialog() {
-        getSupportFragmentManager()
-                .beginTransaction()
-                .add(R.id.activity_pdfview, DownloadingFragment.newInstance(), "loadingfragment")
-                .commit();
-        Log.e(TAG, "Dialog called");
-    }
-
-
-    //Stará se o stahování souboru
-    private class DownloadTask extends AsyncTask<String, Integer, String> {
-        private Context context;
-        private PowerManager.WakeLock mWakeLock;
-
-        public DownloadTask(Context context) {
-            this.context = context;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            // při vypnutí obrazovky chceme dostahovat soubor, teprve pak může jít CPU chrupkat
-            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-            mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
-                    getClass().getName());
-            mWakeLock.acquire();
-            //TODO: Zavolat fragment
-            //showDialog();
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... progress) {
-            super.onProgressUpdate(progress);
-            //TODO: Update the fragment
-        }
-
-        //pustit wakelock a načíst soubor
-        @Override
-        protected void onPostExecute(String result) {
-            mWakeLock.release();
-            if (result != null) {
-                Snackbar snackbar = Snackbar
-                        .make(findViewById(android.R.id.content), "Download error:\n" + result, Snackbar.LENGTH_LONG)
-                        .setAction("RETRY", new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                final DownloadTask downloadTask = new DownloadTask(PDFActivity.this);
-                                downloadTask.execute(PDF_DIR + pdfFileName);
-                            }
-                        });
-                snackbar.show();
-            } else {
-                Snackbar snackbar = Snackbar
-                        .make(findViewById(android.R.id.content), "File downloaded!", Snackbar.LENGTH_LONG);
-                snackbar.show();
-                displayFromFile(mSongFile);
-            }
-            //TODO: Close the fragment
-        }
-
-        @Override
-        protected String doInBackground(String... params) {
-            InputStream input = null;
-            OutputStream output = null;
-            HttpURLConnection connection = null;
-            try {
-                URL url = new URL(params[0]);
-                Log.i(TAG, url.toString());
-                connection = (HttpURLConnection) url.openConnection();
-                connection.connect();
-
-                // ověření odpovědi 200, aby se neuložil error
-                if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                    return "Server returned HTTP " + connection.getResponseCode()
-                            + " " + connection.getResponseMessage();
-                }
-
-                //pro výpočet % stažených
-                int fileLength = connection.getContentLength();
-
-                // download the file
-                input = new BufferedInputStream(url.openStream(), 8192);
-                output = new FileOutputStream(mSongFile);
-
-                byte data[] = new byte[1024];
-                long total = 0;
-                int count;
-                while ((count = input.read(data)) != -1) {
-                    // allow canceling with back button
-                    if (isCancelled()) {
-                        input.close();
-                        return null;
-                    }
-                    total += count;
-                    // publishing the progress...
-                    if (fileLength > 0) // only if total length is known
-                        publishProgress((int) (total * 100 / fileLength));
-                    output.write(data, 0, count);
-                }
-            } catch (Exception e) {
-                return e.toString();
-            } finally {
-                try {
-                    if (output != null)
-                        output.close();
-                    if (input != null)
-                        input.close();
-                } catch (IOException ignored) {
-                    Log.e(TAG, ignored.getMessage());
-                }
-
-                if (connection != null)
-                    connection.disconnect();
-            }
-            return null;
-        }
     }
 }

@@ -24,7 +24,7 @@ public class SettingsFragment extends PreferenceFragment {
         button.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                //TODO: Downlaod everything
+                //TODO: Downloadd everything
                 return true;
             }
         });

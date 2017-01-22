@@ -5,14 +5,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 tools:context="org.elitanaroda.domkvzpvnk.PDFActivity">
-    <!--
-        <fragment
-            android:name="org.elitanaroda.domkvzpvnk.DownloadingFragment"
-            android:id="@+id/loadingfragment"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:elevation="8dp"
-            android:padding="40dp"/> !-->
+
+    <include
+        android:id="@+id/mToolbar"
+        layout="@layout/toolbar"/>
 
     <com.github.barteksc.pdfviewer.PDFView
         android:id="@+id/pdfView"
@@ -20,7 +16,7 @@
         android:layout_height="match_parent"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true">
+        android:layout_below="@id/mToolbar">
 
     </com.github.barteksc.pdfviewer.PDFView>
     <!--

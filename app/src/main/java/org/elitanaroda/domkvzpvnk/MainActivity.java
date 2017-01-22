@@ -22,10 +22,7 @@ import java.util.List;
 
 /*
 Global TODO:
-search in async
 download files
-material design
-search on youtube
 select autoscroll speed
 NFC send song
 hlavolam.hasGen=true, navíc není vůbec sken ani u drobné paralely, el condor pasa, chci zas v tobě spát je pochybný
