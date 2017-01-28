@@ -101,6 +101,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
             while (!res.isAfterLast()) {
                 Song song = new Song(
+                        mContext,
                         res.getInt(0), //res.getColumnIndex("_id")
                         res.getString(titleColumn),
                         res.getString(artistColumn),

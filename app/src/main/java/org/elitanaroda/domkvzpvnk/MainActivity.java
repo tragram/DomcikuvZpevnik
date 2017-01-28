@@ -1,5 +1,8 @@
 package org.elitanaroda.domkvzpvnk;
 
+import android.app.Notification;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -13,6 +16,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.app.Service;
 
 import java.io.IOException;
 import java.text.Normalizer;
@@ -22,7 +26,6 @@ import java.util.List;
 
 /*
 Global TODO:
-download files
 select autoscroll speed
 NFC send song
 hlavolam.hasGen=true, navíc není vůbec sken ani u drobné paralely, el condor pasa, chci zas v tobě spát je pochybný
@@ -51,6 +54,11 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private SongsAdapter mAdapter;
     private List<Song> mSongList;
 
+    public static String makeTextNiceAgain(String uglyText) {
+        return Normalizer.normalize(uglyText.toLowerCase(), Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+    }
+
     //Vytvoření seznamu odpovídajícího hledání
     private static List<Song> filter(List<Song> songs, String query) {
         final String niceQuery = makeTextNiceAgain(query);
@@ -67,9 +75,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         return filteredSongList;
     }
 
-    static String makeTextNiceAgain(String uglyText) {
-        return Normalizer.normalize(uglyText.toLowerCase(), Normalizer.Form.NFD)
-                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+    public List<Song> getmSongList() {
+        return mSongList;
     }
 
     @Override
@@ -78,6 +85,10 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         setContentView(R.layout.activity_main);
 
         songListView = (RecyclerView) findViewById(R.id.SongRView);
+        songListView.setLayoutManager(new LinearLayoutManager(this));
+        songListView.setHasFixedSize(true);
+        songListView.addItemDecoration(new SimpleDividerItemDecoration(this));
+
         mToolbar = (Toolbar) findViewById(R.id.mToolbar);
         setSupportActionBar(mToolbar);
 
@@ -92,13 +103,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         mSongList = mDBHelper.getAllSongs();
 
         LoadSongsList(ALPHABETICAL_BY_TITLE);
-
-        songListView.setLayoutManager(new LinearLayoutManager(this));
-        songListView.setHasFixedSize(true);
-        songListView.addItemDecoration(new SimpleDividerItemDecoration(this));
         //SnapHelper snapHelper = new LinearSnapHelper();
         //snapHelper.attachToRecyclerView(songListView);
-
     }
 
     private void LoadSongsList(Comparator<Song> songComparator) {
@@ -137,6 +143,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                         .commit();
                 return true;
             case R.id.sortBy:
+                //TODO:Popup menu
                 LoadSongsList(ALPHABETICAL_BY_ARTIST);
                 return true;
             default:
@@ -144,6 +151,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         }
     }
 
+    //TODO:close searchview on no text
     @Override
     public boolean onQueryTextSubmit(String query) {
         return false;
@@ -159,7 +167,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     //Spuštění aktivity se souborem
     public void openPDFDocument(Song song) {
         Intent intent = new Intent(this, PDFActivity.class);
-        intent.putExtra("fileName", song.getFileName());
+        intent.putExtra(PDFActivity.SONG_KEY, song);
         startActivity(intent);
     }
 

@@ -1,28 +1,18 @@
 package org.elitanaroda.domkvzpvnk;
 
 import android.content.Context;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.VectorDrawable;
-import android.support.graphics.drawable.VectorDrawableCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.util.SortedList;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
-import java.util.ArrayList;
+import java.io.File;
 import java.util.Comparator;
 import java.util.List;
-
-import static android.content.ContentValues.TAG;
 
 /**
  * Created by Dominik on 06.12.2016.
@@ -34,7 +24,6 @@ public class SongsAdapter extends
 
     private final String TAG = "SongsAdapter";
     private final Comparator<Song> mComparator;
-
     //TODO: Improve these methods
     private final SortedList.Callback<Song> mCallback = new SortedList.Callback<Song>() {
         @Override
@@ -94,7 +83,6 @@ public class SongsAdapter extends
         LayoutInflater inflater = LayoutInflater.from(context);
 
         View songView = inflater.inflate(R.layout.item_song, parent, false);
-
         ViewHolder viewHolder = new ViewHolder(songView);
         return viewHolder;
     }
@@ -108,9 +96,14 @@ public class SongsAdapter extends
         title.setText(song.getmTitle());
         TextView artist = holder.artistTextView;
         artist.setText(song.getmArtist());
-        ImageButton YTButton = holder.YTButton;
-    }
+        //ImageButton YTButton = holder.YTButton;
 
+        //TODO: Při stažení nebo smazání upravit stav
+        if (new File(mContext.getFilesDir().getAbsolutePath() + File.separatorChar + song.getFileName()).isFile())
+            holder.checkmarkIV.setVisibility(View.VISIBLE);
+        else
+            holder.checkmarkIV.setVisibility(View.INVISIBLE);
+    }
 
     @Override
     public int getItemCount() {
@@ -152,12 +145,14 @@ public class SongsAdapter extends
         public TextView titleTextView;
         public TextView artistTextView;
         public ImageButton YTButton;
+        public ImageView checkmarkIV;
 
         public ViewHolder(final View itemView) {
             super(itemView);
             this.titleTextView = (TextView) itemView.findViewById(R.id.title);
             this.artistTextView = (TextView) itemView.findViewById(R.id.artist);
             this.YTButton = (ImageButton) itemView.findViewById(R.id.YTButton);
+            this.checkmarkIV = (ImageView) itemView.findViewById(R.id.checkmarkImage);
 
             YTButton.setOnClickListener(new View.OnClickListener() {
                 @Override

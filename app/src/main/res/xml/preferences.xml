@@ -3,10 +3,10 @@
     <CheckBoxPreference
         android:defaultValue="true"
         android:key="keepFiles"
-        android:summary="Checking this will not destroy your data plan. ;)"
+        android:summary="The easiest way of saving your data plan \nWarning: Unchecking this WILL delete all of your files!"
         android:title="Keep files"/>
     <Preference
         android:key="plsDownloadAll"
-        android:summary="This will download everything from the database"
-        android:title="I will not have internet"/>
+        android:summary="WiFi v nedohlednu"
+        android:title="Jedu na hory"/>
 </PreferenceScreen>
