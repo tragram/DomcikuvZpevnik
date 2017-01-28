@@ -39,6 +39,9 @@ public class Song implements Parcelable {
         this.mLanguage = ((byte) language);
         if (hasPDFgen == 0)
             this.mHasPDFgen = false;
+        else
+            this.mHasPDFgen = true;
+
         this.mSongFile = new File(context.getFilesDir().getAbsolutePath() + File.separatorChar + getFileName());
         if (mSongFile.isFile()) {
             mIsOnLocalStorage = true;

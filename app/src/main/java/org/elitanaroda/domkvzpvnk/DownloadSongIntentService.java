@@ -52,6 +52,7 @@ public class DownloadSongIntentService extends IntentService {
             this.mSong = intent.getParcelableExtra(PDFActivity.SONG_KEY);
             result = Download(mSong);
         } else if (intent.hasExtra(PDFActivity.SONG_ARRAY_KEY)) {
+            //TODO: Show notification
             Parcelable[] parcelable = intent.getParcelableArrayExtra(PDFActivity.SONG_ARRAY_KEY);
             try {
                 for (Parcelable song : parcelable) {
@@ -93,7 +94,7 @@ public class DownloadSongIntentService extends IntentService {
         HttpURLConnection connection = null;
         try {
             URL url = new URL(PDF_DIR + song.getFileName());
-            Log.i(TAG, url.toString());
+            Log.v(TAG, url.toString());
             connection = (HttpURLConnection) url.openConnection();
             connection.connect();
 
@@ -124,7 +125,7 @@ public class DownloadSongIntentService extends IntentService {
                 }
                 output.write(data, 0, count);
             }
-            Log.i(TAG, song.getmSongFile().getAbsolutePath() + " - sucessful download!");
+            Log.v(TAG, song.getmSongFile().getAbsolutePath() + " - sucessful download!");
         } catch (Exception e) {
             return e.toString();
         } finally {

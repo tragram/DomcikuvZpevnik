@@ -57,7 +57,6 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         Log.i(TAG, "PreferenceChanged!");
         if (key.equals("keepFiles")) {
-
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
             if (!sharedPref.getBoolean("keepFiles", true)) {
                 try {

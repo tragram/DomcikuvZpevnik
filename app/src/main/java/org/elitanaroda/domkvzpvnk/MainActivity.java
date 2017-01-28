@@ -4,8 +4,10 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -103,8 +105,15 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         mSongList = mDBHelper.getAllSongs();
 
         LoadSongsList(ALPHABETICAL_BY_TITLE);
+
         //SnapHelper snapHelper = new LinearSnapHelper();
         //snapHelper.attachToRecyclerView(songListView);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mAdapter.notifyDataSetChanged();
     }
 
     private void LoadSongsList(Comparator<Song> songComparator) {
@@ -126,7 +135,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
-
         MenuItem searchItem = menu.findItem(R.id.action_search);
         SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
         searchView.setOnQueryTextListener(this);
@@ -169,6 +177,10 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         Intent intent = new Intent(this, PDFActivity.class);
         intent.putExtra(PDFActivity.SONG_KEY, song);
         startActivity(intent);
+
+        //Bez tohohle by to při dalším otevření nic neotevřelo, pokud se to smazalo
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        song.setmIsOnLocalStorage(sharedPref.getBoolean("keepFiles", true));
     }
 
     public void openYoutube(String song) {

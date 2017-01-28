@@ -11,17 +11,25 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.SeekBar;
 
 import com.github.barteksc.pdfviewer.PDFView;
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle;
 
 import java.io.File;
+import java.security.spec.ECField;
 
 public class PDFActivity extends AppCompatActivity {
     public static final String SONG_KEY = "songObject";
@@ -30,22 +38,22 @@ public class PDFActivity extends AppCompatActivity {
     public static final String RETRY_KEY = "retry";
     private static final String DOWNLOADING_FRAGMENT_TAG = "downloadingFragment";
     private static String TAG = "PDFViewActivity";
-    //PDF variables
-    private PDFView pdfView;
-    private int pageNumber = 0;
+
     private Song mSong;
 
+    //PDF variables
+    private PDFView pdfView;
     //Scrolling variables
     private boolean doScroll = false;
-    private Button mScrollButton;
     private Handler mScrollHandler;
+    private float mScrollSpeed = 1f;
     private Context mContext;
 
     //Posun obrazu
     private Runnable ScrollRunnable = new Runnable() {
         @Override
         public void run() {
-            pdfView.moveRelativeTo(0, -3);
+            pdfView.moveRelativeTo(0, -mScrollSpeed);
             mScrollHandler.postDelayed(this, 15);
         }
     };
@@ -62,28 +70,18 @@ public class PDFActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.mContext = getApplicationContext();
+
         //Inicializace UI
         setContentView(R.layout.activity_pdfview);
         pdfView = (PDFView) findViewById(R.id.pdfView);
+        Toolbar mToolbar = (Toolbar) findViewById(R.id.mToolbar);
+        setSupportActionBar(mToolbar);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
+
         Intent intent = getIntent();
         mSong = intent.getParcelableExtra(SONG_KEY);
-        //mScrollButton = (Button) findViewById(R.id.scrollButton);
 
-        /*mScrollButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!doScroll) {
-                    doScroll = true;
-                    mScrollHandler = new Handler();
-                    mScrollHandler.post(ScrollRunnable);
-                    mScrollHandler.postDelayed(RefreshPageRunnable, 500);
-
-                } else {
-                    doScroll = false;
-                    mScrollHandler.removeCallbacks(ScrollRunnable);
-                }
-            }
-        });*/
+        mScrollHandler = new Handler();
 
         //Get file location
         //Pokud už máme soubor, není nutné ho znovu stahovat
@@ -145,7 +143,53 @@ public class PDFActivity extends AppCompatActivity {
 
     }
 
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.pdf_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.startStop:
+                if (doScroll) {
+                    stopScrolling();
+                    item.setIcon(ContextCompat.getDrawable(mContext, R.drawable.ic_play_arrow_white_24dp));
+                } else {
+                    startScrolling();
+                    item.setIcon(ContextCompat.getDrawable(mContext, R.drawable.ic_pause_white_24dp));
+                }
+                break;
+            case R.id.scrollFaster:
+                mScrollSpeed += 0.3f;
+                break;
+            case R.id.scrollSlower:
+                mScrollSpeed -= 0.3f;
+                break;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+        return true;
+    }
+
+    private void startScrolling() {
+        doScroll = true;
+        mScrollHandler = new Handler();
+        mScrollHandler.post(ScrollRunnable);
+        mScrollHandler.postDelayed(RefreshPageRunnable, 500);
+    }
+
+    private void stopScrolling() {
+        doScroll = false;
+        try {
+            mScrollHandler.removeCallbacksAndMessages(null);
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage());
+        }
+    }
+
     //Checks if there's internet connection, returns true when there is
+
     private boolean hasInternetConnection() {
         ConnectivityManager cm =
                 (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -163,7 +207,7 @@ public class PDFActivity extends AppCompatActivity {
     private void displayFromFile(File file) {
         Log.i(TAG, file.getAbsolutePath());
         pdfView.fromFile(file)
-                .defaultPage(pageNumber)
+                .defaultPage(0)
                 .enableAnnotationRendering(true)
                 .scrollHandle(new DefaultScrollHandle(this))
                 .onLoad(new OnLoadCompleteListener() {
@@ -183,22 +227,22 @@ public class PDFActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
         if (doScroll) {
-            mScrollHandler.post(ScrollRunnable);
-            mScrollHandler.postDelayed(RefreshPageRunnable, 700);
+            startScrolling();
         }
     }
 
     //nechceme dál scrollovat a refreshovat
     @Override
-    public void onStop() {
+    public void onPause() {
         super.onPause();
         if (doScroll)
-            mScrollHandler.removeCallbacks(ScrollRunnable, RefreshPageRunnable);
+            mScrollHandler.removeCallbacksAndMessages(null);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         if (!sharedPref.getBoolean("keepFiles", true)) {
             try {
