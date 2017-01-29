@@ -17,5 +17,18 @@
         android:id="@+id/sortBy"
         android:icon="@drawable/ic_sort_white_24px"
         android:title="Seřadit"
-        app:showAsAction="ifRoom"/>
+        app:showAsAction="ifRoom">
+        <menu>
+            <item
+                android:id="@+id/sortByName"
+                android:title="Sort by name"/>
+            <item
+                android:id="@+id/sortByArtist"
+                android:title="Sort by artist"/>
+            <item
+                android:id="@+id/sortByDate"
+                android:title="Sort by date added"/>
+        </menu>
+
+    </item>
 </menu>

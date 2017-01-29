@@ -1,11 +1,15 @@
-package org.elitanaroda.domkvzpvnk;
+package org.elitanaroda.domcikuvzpevnik;
 
 import android.app.IntentService;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.Context;
 import android.os.Parcelable;
 import android.os.PowerManager;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
@@ -25,9 +29,9 @@ public class DownloadSongIntentService extends IntentService {
     public static final String BROADCAST_PROGRESS_UPDATE = PREFIX + ".PROGRESS";
 
     private static final String PDF_DIR = "http://elitanaroda.org/zpevnik/pdfs/";
+    private final static int NOTIFICATION_ID = 12;
     private Song[] mSongs;
     private Song mSong;
-
     private PowerManager.WakeLock mWakeLock;
 
     public DownloadSongIntentService() {
@@ -54,6 +58,25 @@ public class DownloadSongIntentService extends IntentService {
         } else if (intent.hasExtra(PDFActivity.SONG_ARRAY_KEY)) {
             //TODO: Show notification
             Parcelable[] parcelable = intent.getParcelableArrayExtra(PDFActivity.SONG_ARRAY_KEY);
+
+            int progress = 0;
+            int total = parcelable.length;
+            NotificationCompat.Builder mBuilder =
+                    new NotificationCompat.Builder(this)
+                            .setSmallIcon(R.mipmap.ic_launcher_true)
+                            .setContentTitle("Downloading your files")
+                            .setContentText("Download in progress");
+            NotificationManager mNotificationManager =
+                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            Intent showActivityIntent = new Intent(this, MainActivity.class);
+            TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+            stackBuilder.addParentStack(MainActivity.class);
+
+            // Adds the Intent that starts the Activity to the top of the stack
+            stackBuilder.addNextIntent(showActivityIntent);
+            PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+            mBuilder.setContentIntent(resultPendingIntent);
+
             try {
                 for (Parcelable song : parcelable) {
                     if (!((Song) song).ismIsOnLocalStorage()) {
@@ -61,9 +84,17 @@ public class DownloadSongIntentService extends IntentService {
                         if (result != null)
                             Log.e(TAG, ((Song) song).getFileName() + " not downloaded:\n" + result);
                     }
+                    progress++;
+                    mBuilder.setProgress(total, progress, false);
+                    mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Array not SongArray?\n" + e.getMessage());
+            } finally {
+                mBuilder.setContentText("Download complete")
+                        // Removes the progress bar
+                        .setProgress(0, 0, false);
+                mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
             }
 
         } else {

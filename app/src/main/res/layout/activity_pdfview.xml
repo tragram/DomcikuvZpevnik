@@ -5,7 +5,7 @@
                 android:id="@+id/activity_pdfview"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                tools:context="org.elitanaroda.domkvzpvnk.PDFActivity">
+                tools:context="org.elitanaroda.domcikuvzpevnik.PDFActivity">
 
     <include
         android:id="@+id/mToolbar"

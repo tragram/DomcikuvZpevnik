@@ -1,4 +1,4 @@
-package org.elitanaroda.domkvzpvnk;
+package org.elitanaroda.domcikuvzpevnik;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -13,23 +13,18 @@ import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
-import android.widget.SeekBar;
 
 import com.github.barteksc.pdfviewer.PDFView;
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle;
 
 import java.io.File;
-import java.security.spec.ECField;
 
 public class PDFActivity extends AppCompatActivity {
     public static final String SONG_KEY = "songObject";
@@ -65,6 +60,7 @@ public class PDFActivity extends AppCompatActivity {
             mScrollHandler.postDelayed(this, 700);
         }
     };
+    private Menu mMenu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -145,6 +141,7 @@ public class PDFActivity extends AppCompatActivity {
 
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.pdf_menu, menu);
+        mMenu = menu;
         return true;
     }
 
@@ -155,9 +152,14 @@ public class PDFActivity extends AppCompatActivity {
                 if (doScroll) {
                     stopScrolling();
                     item.setIcon(ContextCompat.getDrawable(mContext, R.drawable.ic_play_arrow_white_24dp));
+                    mMenu.findItem(R.id.scrollFaster).setVisible(false);
+                    mMenu.findItem(R.id.scrollSlower).setVisible(false);
+
                 } else {
                     startScrolling();
                     item.setIcon(ContextCompat.getDrawable(mContext, R.drawable.ic_pause_white_24dp));
+                    mMenu.findItem(R.id.scrollFaster).setVisible(true);
+                    mMenu.findItem(R.id.scrollSlower).setVisible(true);
                 }
                 break;
             case R.id.scrollFaster:

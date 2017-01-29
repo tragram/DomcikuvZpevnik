@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="org.elitanaroda.domkvzpvnk">
+          package="org.elitanaroda.domcikuvzpevnik">
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
@@ -16,19 +16,14 @@
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
+
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-
         <activity android:name=".PDFActivity"/>
         <activity
-            android:name=".SettingsActivity"
-            android:label="@string/title_activity_settings">
-        </activity>
-
-        <activity
             android:name=".SettingsFragment"
-            android:label="@string/title_activity_preferences_fragment"
+            android:label="Nastavení"
             android:theme="@style/MyMaterialTheme">
         </activity>
 
@@ -36,6 +31,17 @@
             android:name=".DownloadSongIntentService"
             android:exported="false">
         </service>
+
+        <activity
+            android:name=".YouTubeActivity"
+            android:label="@string/title_activity_you_tube"
+            android:parentActivityName="com.google.android.youtube.player.YouTubeBaseActivity"
+            android:screenOrientation="landscape"
+            android:theme="@style/MyMaterialTheme">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.google.android.youtube.player.YouTubeBaseActivity"/>
+        </activity>
     </application>
 
 </manifest>

@@ -1,4 +1,4 @@
-package org.elitanaroda.domkvzpvnk;
+package org.elitanaroda.domcikuvzpevnik;
 
 import android.content.Context;
 import android.database.Cursor;

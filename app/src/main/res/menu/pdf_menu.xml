@@ -9,20 +9,21 @@
         app:showAsAction="never"/>
 
     <item
-        android:id="@+id/startStop"
-        android:icon="@drawable/ic_play_arrow_white_24dp"
-        android:title="StartOrStop"
-        app:showAsAction="always"/>
-
-    <item
         android:id="@+id/scrollFaster"
         android:icon="@drawable/ic_arrow_downward_white_24dp"
         android:title="ScrollFaster"
+        android:visible="false"
         app:showAsAction="always"/>
-
     <item
         android:id="@+id/scrollSlower"
         android:icon="@drawable/ic_arrow_upward_white_24dp"
         android:title="ScrollSlower"
+        android:visible="false"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/startStop"
+        android:icon="@drawable/ic_play_arrow_white_24dp"
+        android:title="StartOrStop"
         app:showAsAction="always"/>
 </menu>

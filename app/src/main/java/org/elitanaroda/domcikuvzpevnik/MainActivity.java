@@ -1,13 +1,13 @@
-package org.elitanaroda.domkvzpvnk;
+package org.elitanaroda.domcikuvzpevnik;
 
-import android.app.Notification;
-import android.app.PendingIntent;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.design.widget.Snackbar;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -18,7 +18,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.app.Service;
 
 import java.io.IOException;
 import java.text.Normalizer;
@@ -28,9 +27,9 @@ import java.util.List;
 
 /*
 Global TODO:
-select autoscroll speed
 NFC send song
-hlavolam.hasGen=true, navíc není vůbec sken ani u drobné paralely, el condor pasa, chci zas v tobě spát je pochybný
+permissions
+chci zas v tobě spát je pochybný
 */
 
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener {
@@ -50,6 +49,19 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         }
     };
     private static String TAG = "Main";
+    //TODO: Pořádný řazení... Problém je v tom, že i když srovná dva, tak nesrovná všechny :((
+    private static final Comparator<Song> BY_DATE = new Comparator<Song>() {
+        @Override
+        public int compare(Song o1, Song o2) {
+            Log.i(TAG, String.valueOf(o1.getmDateAdded()) + " " + String.valueOf(o2.getmDateAdded()));
+            if (o1.getmDateAdded() == o2.getmDateAdded())
+                return Normalizer.normalize(o1.getmTitle(), Normalizer.Form.NFD).
+                        compareTo(Normalizer.normalize(o2.getmTitle(), Normalizer.Form.NFD));
+            else
+                return o1.getmDateAdded() - o2.getmDateAdded();
+
+        }
+    };
     private DBHelper mDBHelper;
     private RecyclerView songListView;
     private Toolbar mToolbar;
@@ -75,6 +87,16 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             }
         }
         return filteredSongList;
+    }
+
+    public static boolean isMyServiceRunning(Context context, Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public List<Song> getmSongList() {
@@ -150,9 +172,14 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                         .addToBackStack("SettingsFragment")
                         .commit();
                 return true;
-            case R.id.sortBy:
-                //TODO:Popup menu
+            case R.id.sortByName:
+                LoadSongsList(ALPHABETICAL_BY_TITLE);
+                return true;
+            case R.id.sortByArtist:
                 LoadSongsList(ALPHABETICAL_BY_ARTIST);
+                return true;
+            case R.id.sortByDate:
+                LoadSongsList(BY_DATE);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -176,7 +203,11 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     public void openPDFDocument(Song song) {
         Intent intent = new Intent(this, PDFActivity.class);
         intent.putExtra(PDFActivity.SONG_KEY, song);
-        startActivity(intent);
+        if (!song.ismIsOnLocalStorage() && isMyServiceRunning(this, DownloadSongIntentService.class)) {
+            Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content), "Dočkej času jako husa klasu!", Snackbar.LENGTH_LONG);
+            snackbar.show();
+        } else
+            startActivity(intent);
 
         //Bez tohohle by to při dalším otevření nic neotevřelo, pokud se to smazalo
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
@@ -185,10 +216,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     public void openYoutube(String song) {
         //TODO: Funguje to pochybně
-        Intent intent = new Intent(Intent.ACTION_SEARCH);
-        intent.setPackage("com.google.android.youtube");
+        Intent intent = new Intent(this, YouTubeActivity.class);
         intent.putExtra("query", song);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
     }
 

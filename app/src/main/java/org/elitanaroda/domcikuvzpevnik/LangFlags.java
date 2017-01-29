@@ -1,4 +1,4 @@
-package org.elitanaroda.domkvzpvnk;
+package org.elitanaroda.domcikuvzpevnik;
 
 /**
  * Created by Dominik on 12/24/2016.

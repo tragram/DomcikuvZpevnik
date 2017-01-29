@@ -1,11 +1,10 @@
-package org.elitanaroda.domkvzpvnk;
+package org.elitanaroda.domcikuvzpevnik;
 
 import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
 
 import java.io.File;
-import java.text.Normalizer;
 
 /**
  * Created by Dominik on 10.12.2016.
