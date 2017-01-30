@@ -3,8 +3,10 @@ package org.elitanaroda.domcikuvzpevnik;
 import android.app.IntentService;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.Context;
+import android.content.IntentFilter;
 import android.os.Parcelable;
 import android.os.PowerManager;
 import android.support.v4.app.TaskStackBuilder;
@@ -27,12 +29,14 @@ public class DownloadSongIntentService extends IntentService {
     public static final String BROADCAST_DOWNLOAD_FINISHED = PREFIX + ".FINISHED";
     public static final String BROADCAST_SHOW_ERROR = PREFIX + ".SHOW";
     public static final String BROADCAST_PROGRESS_UPDATE = PREFIX + ".PROGRESS";
+    public static final String BROADCAST_STOP_BATCH_DOWNLOAD = PREFIX + ".STOP";
 
     private static final String PDF_DIR = "http://elitanaroda.org/zpevnik/pdfs/";
     private final static int NOTIFICATION_ID = 12;
-    private Song[] mSongs;
     private Song mSong;
     private PowerManager.WakeLock mWakeLock;
+
+    private boolean shouldContinue = true;
 
     public DownloadSongIntentService() {
         super("DownloadSongIntentService");
@@ -41,6 +45,16 @@ public class DownloadSongIntentService extends IntentService {
     @Override
     public void onStart(Intent intent, int startId) {
         super.onStart(intent, startId);
+        IntentFilter gottaStopFilter =
+                new IntentFilter(BROADCAST_STOP_BATCH_DOWNLOAD);
+        LocalBroadcastManager.getInstance(this).
+                registerReceiver(new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        Log.w(TAG, "BROADCAST RECEIVED");
+                        shouldContinue = false;
+                    }
+                }, gottaStopFilter);
     }
 
 
@@ -56,7 +70,6 @@ public class DownloadSongIntentService extends IntentService {
             this.mSong = intent.getParcelableExtra(PDFActivity.SONG_KEY);
             result = Download(mSong);
         } else if (intent.hasExtra(PDFActivity.SONG_ARRAY_KEY)) {
-            //TODO: Show notification
             Parcelable[] parcelable = intent.getParcelableArrayExtra(PDFActivity.SONG_ARRAY_KEY);
 
             int progress = 0;
@@ -79,6 +92,10 @@ public class DownloadSongIntentService extends IntentService {
 
             try {
                 for (Parcelable song : parcelable) {
+                    if (!shouldContinue) {
+                        setNotificationToAborted();
+                        break;
+                    }
                     if (!((Song) song).ismIsOnLocalStorage()) {
                         result = Download((Song) song);
                         if (result != null)
@@ -87,14 +104,13 @@ public class DownloadSongIntentService extends IntentService {
                     progress++;
                     mBuilder.setProgress(total, progress, false);
                     mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+                    mBuilder.setContentText("Download complete")
+                            // Removes the progress bar
+                            .setProgress(0, 0, false);
+                    mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Array not SongArray?\n" + e.getMessage());
-            } finally {
-                mBuilder.setContentText("Download complete")
-                        // Removes the progress bar
-                        .setProgress(0, 0, false);
-                mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
             }
 
         } else {
@@ -117,6 +133,15 @@ public class DownloadSongIntentService extends IntentService {
         }
 
         mWakeLock.release();
+    }
+
+    private void setNotificationToAborted() {
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getApplicationContext())
+                .setSmallIcon(R.mipmap.ic_launcher_true)
+                .setContentTitle("Action aborted")
+                .setContentText("User cancelled the operation");
+        ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE))
+                .notify(NOTIFICATION_ID, mBuilder.build());
     }
 
     private String Download(Song song) {

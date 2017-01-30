@@ -30,7 +30,12 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.3-alpha', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile files('libs/YouTubeAndroidPlayerApi.jar')
+    compile('com.google.apis:google-api-services-youtube:v3-rev181-1.22.0') {
+        exclude module: 'httpclient' //by artifact name
+        exclude group: 'org.apache.httpcomponents' //by group
+        exclude group: 'org.apache.httpcomponents', module: 'httpclient'
+        //by both name and group
+    }
     compile 'com.android.support:appcompat-v7:25.1.0'
     compile 'com.android.support:support-v4:25.1.0'
     compile 'com.android.support:recyclerview-v7:25.1.0'
@@ -39,6 +44,5 @@ dependencies {
     compile 'com.daimajia.numberprogressbar:library:1.2@aar'
     compile 'com.android.support:design:25.1.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.0-beta4'
-    compile 'com.google.apis:google-api-services-youtube:v3-rev181-1.22.0'
     testCompile 'junit:junit:4.12'
 }

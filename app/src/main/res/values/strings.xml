@@ -2,13 +2,6 @@
     <string name="app_name">Domčíkův Zpěvník</string>
     <string name="action_search">Hledat</string>
     <string name="action_settings">Nastavení</string>
-
-    <string name="player_error">Error initializing YouTube player: %s</string>
-    <string name="seek_to">Jump To</string>
-    <string name="seek_to_hint">Seconds</string>
-    <string name="title_activity_you_tube">YouTubeActivity</string>
-
-    <string name="title_activity_fullscreen">FullscreenActivity</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="language_settings">org.elitanaroda.domcikuvzpevnik.language</string>
+    <string name="sort_settings">org.elitanaroda.domcikuvzpevnik.sort</string>
 </resources>

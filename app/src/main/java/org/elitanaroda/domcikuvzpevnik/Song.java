@@ -25,17 +25,18 @@ public class Song implements Parcelable {
     private String mTitle;
     private String mArtist;
     private int mDateAdded;
-    private byte mLanguage;
+
+    private Helper.LanguageEnum mLanguage;
     private boolean mHasPDFgen;
     private boolean mIsOnLocalStorage;
     private File mSongFile;
 
-    public Song(Context context, int id, String title, String artist, int dateAdded, int language, int hasPDFgen) {
+    public Song(Context context, int id, String title, String artist, int dateAdded, String language, int hasPDFgen) {
         this.mId = id;
         this.mTitle = title;
         this.mArtist = artist;
         this.mDateAdded = dateAdded;
-        this.mLanguage = ((byte) language);
+        this.mLanguage = Helper.LanguageEnum.valueOf(language);
         if (hasPDFgen == 0)
             this.mHasPDFgen = false;
         else
@@ -53,7 +54,7 @@ public class Song implements Parcelable {
         this.mTitle = in.readString();
         this.mArtist = in.readString();
         this.mDateAdded = in.readInt();
-        this.mLanguage = in.readByte();
+        this.mLanguage = Helper.LanguageEnum.valueOf(in.readString());
         this.mHasPDFgen = (boolean) in.readValue(null);
         this.mIsOnLocalStorage = (boolean) in.readValue(null);
         this.mSongFile = new File(in.readString());
@@ -71,6 +72,10 @@ public class Song implements Parcelable {
         return mArtist;
     }
 
+    public Helper.LanguageEnum getmLanguage() {
+        return mLanguage;
+    }
+
     public boolean ismIsOnLocalStorage() {
         return mIsOnLocalStorage;
     }
@@ -81,10 +86,6 @@ public class Song implements Parcelable {
 
     public int getmDateAdded() {
         return mDateAdded;
-    }
-
-    public int getmLanguage() {
-        return mLanguage;
     }
 
     public File getmSongFile() {
@@ -131,7 +132,7 @@ public class Song implements Parcelable {
         dest.writeString(this.mTitle);
         dest.writeString(this.mArtist);
         dest.writeInt(this.mDateAdded);
-        dest.writeByte(this.mLanguage);
+        dest.writeString(this.mLanguage.toString());
         dest.writeValue(this.mHasPDFgen);
         dest.writeValue(this.mIsOnLocalStorage);
         dest.writeString(mSongFile.getAbsolutePath());

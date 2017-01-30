@@ -11,6 +11,7 @@ import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,9 +27,17 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     private SharedPreferences sharedPref;
     private Context mContext;
 
+    public static void downloadAllSongs(Context context, List<Song> songList) {
+        Song[] songArray = songList.toArray(new Song[songList.size()]);
+        Intent serviceIntent = new Intent(context, DownloadSongIntentService.class);
+        serviceIntent.putExtra(PDFActivity.SONG_ARRAY_KEY, songArray).putExtra("openPDF", false);
+        context.startService(serviceIntent);
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mContext = getActivity();
 
         // Load the preferences from an XML resource
         addPreferencesFromResource(R.xml.preferences);
@@ -42,16 +51,11 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         downloadAll.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                List<Song> songList = ((MainActivity) getActivity()).getmSongList();
-                Song[] songArray = songList.toArray(new Song[songList.size()]);
-
-                Intent serviceIntent = new Intent(mContext, DownloadSongIntentService.class);
-                serviceIntent.putExtra(PDFActivity.SONG_ARRAY_KEY, songArray).putExtra("openPDF", false);
-                mContext.startService(serviceIntent);
+                downloadAllSongs(mContext, ((MainActivity) getActivity()).getmSongList());
                 return true;
             }
         });
-        mContext = getActivity();
+
     }
 
     @Override
@@ -66,22 +70,18 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         Log.i(TAG, "PreferenceChanged!");
         if (key.equals("keepFiles")) {
             if (!keepFiles.isChecked()) {
-                //TODO:stopnout service
                 if (MainActivity.isMyServiceRunning(mContext, DownloadSongIntentService.class)) {
-                    keepFiles.setChecked(true);
-                    Snackbar snackbar = Snackbar.make(getActivity()
-                            .findViewById(android.R.id.content), "Počkej, až se vše stáhne!", Snackbar.LENGTH_LONG);
-                    snackbar.show();
-                } else {
-                    downloadAll.setEnabled(false);
-                    try {
-                        for (File file : getActivity().getFilesDir().listFiles()) {
-                            if (!file.isDirectory())
-                                file.delete();
-                        }
-                    } catch (Exception e) {
-                        Log.e(TAG, e.getMessage());
+                    Intent localIntent = new Intent(DownloadSongIntentService.BROADCAST_STOP_BATCH_DOWNLOAD);
+                    LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(localIntent);
+                }
+                downloadAll.setEnabled(false);
+                try {
+                    for (File file : mContext.getFilesDir().listFiles()) {
+                        if (!file.isDirectory())
+                            file.delete();
                     }
+                } catch (Exception e) {
+                    Log.e(TAG, e.getMessage());
                 }
             } else
                 downloadAll.setEnabled(true);

@@ -1,5 +1,6 @@
 package org.elitanaroda.domcikuvzpevnik;
 
+import android.app.DialogFragment;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -19,6 +20,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 
 import com.github.barteksc.pdfviewer.PDFView;
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
@@ -66,6 +68,7 @@ public class PDFActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.mContext = getApplicationContext();
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         //Inicializace UI
         setContentView(R.layout.activity_pdfview);
@@ -88,11 +91,8 @@ public class PDFActivity extends AppCompatActivity {
         } else if (hasInternetConnection()) {
             startDownload(mSong);
 
-            getSupportFragmentManager()
-                    .beginTransaction()
-                    .add(R.id.activity_pdfview, DownloadingFragment
-                            .newInstance(), DOWNLOADING_FRAGMENT_TAG)
-                    .commit();
+            DownloadDialogFragment downloadDialogFragment = new DownloadDialogFragment();
+            downloadDialogFragment.show(getFragmentManager(), DOWNLOADING_FRAGMENT_TAG);
         } else {
             Snackbar snackbar = Snackbar
                     .make(findViewById(android.R.id.content), "No Internet Connection. \n " +
@@ -125,11 +125,14 @@ public class PDFActivity extends AppCompatActivity {
                         Snackbar snackbar = Snackbar
                                 .make(findViewById(android.R.id.content),
                                         args.getString(MESSAGE_KEY, "No message sent... WTF"), Snackbar.LENGTH_LONG);
+                        if (getFragmentManager().findFragmentByTag(DOWNLOADING_FRAGMENT_TAG) != null)
+                            ((DialogFragment) getFragmentManager().findFragmentByTag(DOWNLOADING_FRAGMENT_TAG)).dismiss();
                         if (args.getBoolean(RETRY_KEY, true)) {
                             snackbar.setAction("RETRY", new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
                                     startDownload(mSong);
+                                    (new DownloadDialogFragment()).show(getFragmentManager(), DOWNLOADING_FRAGMENT_TAG);
                                 }
                             });
                         }
@@ -174,6 +177,7 @@ public class PDFActivity extends AppCompatActivity {
         return true;
     }
 
+    //adds runnables to the queque
     private void startScrolling() {
         doScroll = true;
         mScrollHandler = new Handler();
@@ -181,6 +185,7 @@ public class PDFActivity extends AppCompatActivity {
         mScrollHandler.postDelayed(RefreshPageRunnable, 500);
     }
 
+    //removes all callbacks from the queque
     private void stopScrolling() {
         doScroll = false;
         try {
@@ -191,13 +196,13 @@ public class PDFActivity extends AppCompatActivity {
     }
 
     //Checks if there's internet connection, returns true when there is
-
     private boolean hasInternetConnection() {
         ConnectivityManager cm =
                 (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         return (activeNetwork != null && activeNetwork.isConnectedOrConnecting());
     }
+
 
     private void startDownload(Song songToDownload) {
         Intent serviceIntent = new Intent(this, DownloadSongIntentService.class);
@@ -215,10 +220,8 @@ public class PDFActivity extends AppCompatActivity {
                 .onLoad(new OnLoadCompleteListener() {
                     @Override
                     public void loadComplete(int nbPages) {
-                        if (getSupportFragmentManager().findFragmentByTag(DOWNLOADING_FRAGMENT_TAG) != null)
-                            getSupportFragmentManager().beginTransaction()
-                                    .remove(getSupportFragmentManager()
-                                            .findFragmentByTag(DOWNLOADING_FRAGMENT_TAG)).commit();
+                        if (getFragmentManager().findFragmentByTag(DOWNLOADING_FRAGMENT_TAG) != null)
+                            ((DialogFragment) getFragmentManager().findFragmentByTag(DOWNLOADING_FRAGMENT_TAG)).dismiss();
                     }
                 })
                 .load();
@@ -245,6 +248,7 @@ public class PDFActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
+        //pokud je zvolena možnost mazat, tak smazat
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         if (!sharedPref.getBoolean("keepFiles", true)) {
             try {

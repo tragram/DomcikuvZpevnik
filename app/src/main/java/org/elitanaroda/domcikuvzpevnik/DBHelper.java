@@ -96,7 +96,7 @@ public class DBHelper extends SQLiteOpenHelper {
             int titleColumn = res.getColumnIndex("Title");
             int artistColumn = res.getColumnIndex("Artist");
             int addedOnColumn = res.getColumnIndex("AddedOn");
-            int languageColumn = res.getColumnIndex("Language");
+            int languageColumn = res.getColumnIndex("Lang");
             int hasGenColumn = res.getColumnIndex("hasGen");
 
             while (!res.isAfterLast()) {
@@ -106,7 +106,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         res.getString(titleColumn),
                         res.getString(artistColumn),
                         res.getInt(addedOnColumn),
-                        res.getInt(languageColumn),
+                        res.getString(languageColumn),
                         res.getInt(hasGenColumn)
                 );
 
