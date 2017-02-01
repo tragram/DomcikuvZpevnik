@@ -34,7 +34,7 @@ public class PDFActivity extends AppCompatActivity {
     public static final String MESSAGE_KEY = "message";
     public static final String RETRY_KEY = "retry";
     private static final String DOWNLOADING_FRAGMENT_TAG = "downloadingFragment";
-    private static String TAG = "PDFViewActivity";
+    private static final String TAG = "PDFViewActivity";
 
     private Song mSong;
 
@@ -43,26 +43,57 @@ public class PDFActivity extends AppCompatActivity {
     //Scrolling variables
     private boolean doScroll = false;
     private Handler mScrollHandler;
-    private float mScrollSpeed = 1f;
-    private Context mContext;
-
-    //Posun obrazu
-    private Runnable ScrollRunnable = new Runnable() {
-        @Override
-        public void run() {
-            pdfView.moveRelativeTo(0, -mScrollSpeed);
-            mScrollHandler.postDelayed(this, 15);
-        }
-    };
     //Doostření nových částí dokumentu
-    private Runnable RefreshPageRunnable = new Runnable() {
+    private final Runnable RefreshPageRunnable = new Runnable() {
         @Override
         public void run() {
             pdfView.loadPages();
             mScrollHandler.postDelayed(this, 700);
         }
     };
+    private float mScrollSpeed = 1f;
+    //Posun obrazu
+    private final Runnable ScrollRunnable = new Runnable() {
+        @Override
+        public void run() {
+            pdfView.moveRelativeTo(0, -mScrollSpeed);
+            mScrollHandler.postDelayed(this, 15);
+        }
+    };
+    private Context mContext;
     private Menu mMenu;
+    private BroadcastReceiver onFinishedReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Song song = intent.getParcelableExtra(SONG_KEY);
+            displayFromFile(song.getmSongFile());
+            Snackbar snackbar = Snackbar
+                    .make(findViewById(android.R.id.content),
+                            "File downloaded!", Snackbar.LENGTH_LONG);
+            snackbar.show();
+        }
+    };
+    private BroadcastReceiver onErrorReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Bundle args = intent.getExtras();
+            Snackbar snackbar = Snackbar
+                    .make(findViewById(android.R.id.content),
+                            args.getString(MESSAGE_KEY, "No message sent... WTF"), Snackbar.LENGTH_LONG);
+            if (getFragmentManager().findFragmentByTag(DOWNLOADING_FRAGMENT_TAG) != null)
+                ((DialogFragment) getFragmentManager().findFragmentByTag(DOWNLOADING_FRAGMENT_TAG)).dismiss();
+            if (args.getBoolean(RETRY_KEY, true)) {
+                snackbar.setAction("RETRY", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        startDownload(mSong);
+                        (new DownloadDialogFragment()).show(getFragmentManager(), DOWNLOADING_FRAGMENT_TAG);
+                    }
+                });
+            }
+            snackbar.show();
+        }
+    };
 
     //Checks if there's internet connection, returns true when there is
     public static boolean hasInternetConnection(Context context) {
@@ -83,7 +114,8 @@ public class PDFActivity extends AppCompatActivity {
         pdfView = (PDFView) findViewById(R.id.pdfView);
         Toolbar mToolbar = (Toolbar) findViewById(R.id.mToolbar);
         setSupportActionBar(mToolbar);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        if (getSupportActionBar() != null)
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         Intent intent = getIntent();
         mSong = intent.getParcelableExtra(SONG_KEY);
@@ -107,47 +139,41 @@ public class PDFActivity extends AppCompatActivity {
                             "File not available on local storage, sorry.", Snackbar.LENGTH_LONG);
             snackbar.show();
         }
+    }
 
+    //Obnovit scrollování a refresh
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (doScroll) {
+            startScrolling();
+        }
+        registerFinishedReceiver();
+        registerErrorReceiver();
+    }
+
+    //nechceme dál scrollovat a refreshovat
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (doScroll)
+            mScrollHandler.removeCallbacksAndMessages(null);
+        unregisterReceiver(onFinishedReceiver);
+        unregisterReceiver(onErrorReceiver);
+    }
+
+    private void registerFinishedReceiver() {
         IntentFilter fileDownloadedFilter =
                 new IntentFilter(DownloadSongIntentService.BROADCAST_DOWNLOAD_FINISHED);
         LocalBroadcastManager.getInstance(this).
-                registerReceiver(new BroadcastReceiver() {
-                    @Override
-                    public void onReceive(Context context, Intent intent) {
-                        Song song = intent.getParcelableExtra(SONG_KEY);
-                        displayFromFile(song.getmSongFile());
-                        Snackbar snackbar = Snackbar
-                                .make(findViewById(android.R.id.content),
-                                        "File downloaded!", Snackbar.LENGTH_LONG);
-                        snackbar.show();
-                    }
-                }, fileDownloadedFilter);
+                registerReceiver(onFinishedReceiver, fileDownloadedFilter);
+    }
 
+    private void registerErrorReceiver() {
         IntentFilter showSnackbarFilter =
                 new IntentFilter(DownloadSongIntentService.BROADCAST_SHOW_ERROR);
         LocalBroadcastManager.getInstance(this).
-                registerReceiver(new BroadcastReceiver() {
-                    @Override
-                    public void onReceive(Context context, Intent intent) {
-                        Bundle args = intent.getExtras();
-                        Snackbar snackbar = Snackbar
-                                .make(findViewById(android.R.id.content),
-                                        args.getString(MESSAGE_KEY, "No message sent... WTF"), Snackbar.LENGTH_LONG);
-                        if (getFragmentManager().findFragmentByTag(DOWNLOADING_FRAGMENT_TAG) != null)
-                            ((DialogFragment) getFragmentManager().findFragmentByTag(DOWNLOADING_FRAGMENT_TAG)).dismiss();
-                        if (args.getBoolean(RETRY_KEY, true)) {
-                            snackbar.setAction("RETRY", new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    startDownload(mSong);
-                                    (new DownloadDialogFragment()).show(getFragmentManager(), DOWNLOADING_FRAGMENT_TAG);
-                                }
-                            });
-                        }
-                        snackbar.show();
-                    }
-                }, showSnackbarFilter);
-
+                registerReceiver(onErrorReceiver, showSnackbarFilter);
     }
 
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -212,35 +238,21 @@ public class PDFActivity extends AppCompatActivity {
     //Načtení konkrétního souboru
     private void displayFromFile(File file) {
         Log.i(TAG, file.getAbsolutePath());
-        pdfView.fromFile(file)
-                .defaultPage(0)
-                .enableAnnotationRendering(true)
-                .scrollHandle(new DefaultScrollHandle(this))
-                .onLoad(new OnLoadCompleteListener() {
-                    @Override
-                    public void loadComplete(int nbPages) {
-                        if (getFragmentManager().findFragmentByTag(DOWNLOADING_FRAGMENT_TAG) != null)
-                            ((DialogFragment) getFragmentManager().findFragmentByTag(DOWNLOADING_FRAGMENT_TAG)).dismiss();
-                    }
-                })
-                .load();
-    }
-
-    //Obnovit scrollování a refresh
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (doScroll) {
-            startScrolling();
-        }
-    }
-
-    //nechceme dál scrollovat a refreshovat
-    @Override
-    public void onPause() {
-        super.onPause();
-        if (doScroll)
-            mScrollHandler.removeCallbacksAndMessages(null);
+        if (file.exists()) {
+            pdfView.fromFile(file)
+                    .defaultPage(0)
+                    .enableAnnotationRendering(true)
+                    .scrollHandle(new DefaultScrollHandle(this))
+                    .onLoad(new OnLoadCompleteListener() {
+                        @Override
+                        public void loadComplete(int nbPages) {
+                            if (getFragmentManager().findFragmentByTag(DOWNLOADING_FRAGMENT_TAG) != null)
+                                ((DialogFragment) getFragmentManager().findFragmentByTag(DOWNLOADING_FRAGMENT_TAG)).dismiss();
+                        }
+                    })
+                    .load();
+        } else
+            Log.e(TAG, "File doesnt exists, couldnt open it.");
     }
 
     @Override

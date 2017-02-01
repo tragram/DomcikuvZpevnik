@@ -59,14 +59,15 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = super.onCreateView(inflater, container, savedInstanceState);
-        view.setBackgroundColor(Color.WHITE);
+        if (view != null)
+            view.setBackgroundColor(Color.WHITE);
         return view;
     }
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        Log.i(TAG, "PreferenceChanged!");
         if (key.equals("keepFiles")) {
+            //if its unchecked, we need to stop downloading, delete the files and also grey out the other button
             if (!keepFiles.isChecked()) {
                 if (Helper.isMyServiceRunning(mContext, DownloadSongIntentService.class)) {
                     Intent localIntent = new Intent(DownloadSongIntentService.BROADCAST_STOP_BATCH_DOWNLOAD);
