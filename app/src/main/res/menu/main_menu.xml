@@ -32,6 +32,10 @@
                 android:id="@+id/languages"
                 android:title="Select languages">
                 <menu>
+                    <item
+                        android:id="@+id/selectAll"
+                        android:title="Select/Unselect All"/>
+
                     <group android:checkableBehavior="all">
                         <item
                             android:id="@+id/czech"

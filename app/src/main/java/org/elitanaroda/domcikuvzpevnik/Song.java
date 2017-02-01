@@ -95,7 +95,7 @@ public class Song implements Parcelable {
     //vygenerování názvu PDF souboru
     public String getFileName() {
         String fileName = this.mArtist + "_" + this.mTitle;
-        fileName = MainActivity.makeTextNiceAgain(fileName);
+        fileName = Helper.makeTextNiceAgain(fileName);
         fileName = fileName.replace(" ", "_").replace(",", "");
         if (mHasPDFgen) {
             fileName += "-gen";

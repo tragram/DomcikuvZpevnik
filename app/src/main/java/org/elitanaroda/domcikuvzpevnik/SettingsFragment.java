@@ -1,6 +1,5 @@
 package org.elitanaroda.domcikuvzpevnik;
 
-import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,7 +9,6 @@ import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.support.design.widget.Snackbar;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -70,7 +68,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         Log.i(TAG, "PreferenceChanged!");
         if (key.equals("keepFiles")) {
             if (!keepFiles.isChecked()) {
-                if (MainActivity.isMyServiceRunning(mContext, DownloadSongIntentService.class)) {
+                if (Helper.isMyServiceRunning(mContext, DownloadSongIntentService.class)) {
                     Intent localIntent = new Intent(DownloadSongIntentService.BROADCAST_STOP_BATCH_DOWNLOAD);
                     LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(localIntent);
                 }

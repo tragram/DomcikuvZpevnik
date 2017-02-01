@@ -15,6 +15,7 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,6 +43,62 @@ public class DownloadSongIntentService extends IntentService {
         super("DownloadSongIntentService");
     }
 
+    public static String Download(Context context, String urlToDownload, File downloadToFile) {
+        InputStream input = null;
+        OutputStream output = null;
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(urlToDownload);
+            Log.v(TAG, url.toString());
+            connection = (HttpURLConnection) url.openConnection();
+            connection.connect();
+
+            // ověření odpovědi 200, aby se neuložil error
+            if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                return "Server returned HTTP " + connection.getResponseCode()
+                        + " " + connection.getResponseMessage();
+            }
+
+            //pro výpočet % stažených
+            int fileLength = connection.getContentLength();
+
+            // download the file
+            input = new BufferedInputStream(url.openStream(), 8192);
+            output = new FileOutputStream(downloadToFile);
+
+            byte data[] = new byte[1024];
+            long total = 0;
+            int count;
+            while ((count = input.read(data)) != -1) {
+                total += count;
+
+                // publishing the progress only if total length is known
+                if (fileLength > 0) {
+                    Intent localIntent = new Intent(BROADCAST_PROGRESS_UPDATE);
+                    localIntent.putExtra("progress", (int) (total * 100 / fileLength));
+                    LocalBroadcastManager.getInstance(context).sendBroadcast(localIntent);
+                }
+                output.write(data, 0, count);
+            }
+            Log.v(TAG, downloadToFile.getAbsolutePath() + " - sucessful download!");
+        } catch (Exception e) {
+            return e.toString();
+        } finally {
+            try {
+                if (output != null)
+                    output.close();
+                if (input != null)
+                    input.close();
+            } catch (IOException ignored) {
+                Log.e(TAG, ignored.getMessage());
+            }
+
+            if (connection != null)
+                connection.disconnect();
+        }
+        return null;
+    }
+
     @Override
     public void onStart(Intent intent, int startId) {
         super.onStart(intent, startId);
@@ -57,7 +114,6 @@ public class DownloadSongIntentService extends IntentService {
                 }, gottaStopFilter);
     }
 
-
     @Override
     protected void onHandleIntent(Intent intent) {
         PowerManager pm = (PowerManager) this.getSystemService(Context.POWER_SERVICE);
@@ -68,7 +124,7 @@ public class DownloadSongIntentService extends IntentService {
         String result = null;
         if (intent.hasExtra(PDFActivity.SONG_KEY)) {
             this.mSong = intent.getParcelableExtra(PDFActivity.SONG_KEY);
-            result = Download(mSong);
+            result = DownloadSong(this, mSong);
         } else if (intent.hasExtra(PDFActivity.SONG_ARRAY_KEY)) {
             Parcelable[] parcelable = intent.getParcelableArrayExtra(PDFActivity.SONG_ARRAY_KEY);
 
@@ -97,7 +153,7 @@ public class DownloadSongIntentService extends IntentService {
                         break;
                     }
                     if (!((Song) song).ismIsOnLocalStorage()) {
-                        result = Download((Song) song);
+                        result = DownloadSong(this, (Song) song);
                         if (result != null)
                             Log.e(TAG, ((Song) song).getFileName() + " not downloaded:\n" + result);
                     }
@@ -144,59 +200,7 @@ public class DownloadSongIntentService extends IntentService {
                 .notify(NOTIFICATION_ID, mBuilder.build());
     }
 
-    private String Download(Song song) {
-        InputStream input = null;
-        OutputStream output = null;
-        HttpURLConnection connection = null;
-        try {
-            URL url = new URL(PDF_DIR + song.getFileName());
-            Log.v(TAG, url.toString());
-            connection = (HttpURLConnection) url.openConnection();
-            connection.connect();
-
-            // ověření odpovědi 200, aby se neuložil error
-            if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                return "Server returned HTTP " + connection.getResponseCode()
-                        + " " + connection.getResponseMessage();
-            }
-
-            //pro výpočet % stažených
-            int fileLength = connection.getContentLength();
-
-            // download the file
-            input = new BufferedInputStream(url.openStream(), 8192);
-            output = new FileOutputStream(song.getmSongFile());
-
-            byte data[] = new byte[1024];
-            long total = 0;
-            int count;
-            while ((count = input.read(data)) != -1) {
-                total += count;
-
-                // publishing the progress only if total length is known
-                if (fileLength > 0) {
-                    Intent localIntent = new Intent(BROADCAST_PROGRESS_UPDATE);
-                    localIntent.putExtra("progress", (int) (total * 100 / fileLength));
-                    LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
-                }
-                output.write(data, 0, count);
-            }
-            Log.v(TAG, song.getmSongFile().getAbsolutePath() + " - sucessful download!");
-        } catch (Exception e) {
-            return e.toString();
-        } finally {
-            try {
-                if (output != null)
-                    output.close();
-                if (input != null)
-                    input.close();
-            } catch (IOException ignored) {
-                Log.e(TAG, ignored.getMessage());
-            }
-
-            if (connection != null)
-                connection.disconnect();
-        }
-        return null;
+    private String DownloadSong(Context context, Song song) {
+        return Download(context, PDF_DIR + song.getFileName(), song.getmSongFile());
     }
 }

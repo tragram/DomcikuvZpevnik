@@ -64,6 +64,14 @@ public class PDFActivity extends AppCompatActivity {
     };
     private Menu mMenu;
 
+    //Checks if there's internet connection, returns true when there is
+    public static boolean hasInternetConnection(Context context) {
+        ConnectivityManager cm =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return (activeNetwork != null && activeNetwork.isConnectedOrConnecting());
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,7 +96,7 @@ public class PDFActivity extends AppCompatActivity {
         if (mSong.ismIsOnLocalStorage()) {
             displayFromFile(mSong.getmSongFile());
             Log.i(TAG, "File Exists");
-        } else if (hasInternetConnection()) {
+        } else if (hasInternetConnection(this)) {
             startDownload(mSong);
 
             DownloadDialogFragment downloadDialogFragment = new DownloadDialogFragment();
@@ -194,15 +202,6 @@ public class PDFActivity extends AppCompatActivity {
             Log.e(TAG, e.getMessage());
         }
     }
-
-    //Checks if there's internet connection, returns true when there is
-    private boolean hasInternetConnection() {
-        ConnectivityManager cm =
-                (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        return (activeNetwork != null && activeNetwork.isConnectedOrConnecting());
-    }
-
 
     private void startDownload(Song songToDownload) {
         Intent serviceIntent = new Intent(this, DownloadSongIntentService.class);
