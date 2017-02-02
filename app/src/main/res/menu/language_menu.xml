@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/selectAll"
+        android:title="Select/Unselect All"/>
+    <group
+        android:id="@+id/languages"
+        android:checkableBehavior="all">
+        <item
+            android:id="@+id/czech"
+            android:title="Czech"/>
+
+        <item
+            android:id="@+id/english"
+            android:title="English"/>
+        <item
+            android:id="@+id/slovak"
+            android:title="Slovak"/>
+        <item
+            android:id="@+id/spanish"
+            android:title="Spanish"/>
+        <item
+            android:id="@+id/other"
+            android:title="Other"/>
+    </group>
+</menu>

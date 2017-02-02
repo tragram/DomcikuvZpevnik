@@ -40,7 +40,7 @@ public class FilterSongList {
     }
 
     public void filter(List<Song> mSongList, EnumSet<Helper.LanguageEnum> languageEna) {
-        filter(mSongList, languageEna, null);
+        filter(mSongList, languageEna, query);
     }
 
     public void filter(List<Song> mSongList, EnumSet<Helper.LanguageEnum> languageEna, String query) {
@@ -77,7 +77,8 @@ public class FilterSongList {
         @Override
         protected void onPostExecute(List<Song> songList) {
             super.onPostExecute(songList);
-            onFilterDoneListener.onFilter(songList);
+            if (onFilterDoneListener != null)
+                onFilterDoneListener.onFilter(songList);
         }
     }
 }

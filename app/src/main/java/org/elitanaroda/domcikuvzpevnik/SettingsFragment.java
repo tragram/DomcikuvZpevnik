@@ -24,13 +24,16 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     CheckBoxPreference keepFiles;
     private SharedPreferences sharedPref;
     private Context mContext;
+    private OnDeleteSongs onDeleteSongsListener;
 
     public static void downloadAllSongs(Context context, List<Song> songList) {
         Song[] songArray = songList.toArray(new Song[songList.size()]);
-        Intent serviceIntent = new Intent(context, DownloadSongIntentService.class);
+        Intent serviceIntent = new Intent(context, MoreSongsDownloadIS.class);
         serviceIntent.putExtra(PDFActivity.SONG_ARRAY_KEY, songArray).putExtra("openPDF", false);
         context.startService(serviceIntent);
     }
+
+    public void setOnDeleteSongsListener(OnDeleteSongs listener) {this.onDeleteSongsListener = listener;}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -53,7 +56,6 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
                 return true;
             }
         });
-
     }
 
     @Override
@@ -69,8 +71,8 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         if (key.equals("keepFiles")) {
             //if its unchecked, we need to stop downloading, delete the files and also grey out the other button
             if (!keepFiles.isChecked()) {
-                if (Helper.isMyServiceRunning(mContext, DownloadSongIntentService.class)) {
-                    Intent localIntent = new Intent(DownloadSongIntentService.BROADCAST_STOP_BATCH_DOWNLOAD);
+                if (Helper.isMyServiceRunning(mContext, MoreSongsDownloadIS.class)) {
+                    Intent localIntent = new Intent(MoreSongsDownloadIS.BROADCAST_STOP_BATCH_DOWNLOAD);
                     LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(localIntent);
                 }
                 downloadAll.setEnabled(false);
@@ -79,11 +81,18 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
                         if (!file.isDirectory())
                             file.delete();
                     }
+                    if (onDeleteSongsListener != null) {
+                        onDeleteSongsListener.reloadSongs();
+                    }
                 } catch (Exception e) {
                     Log.e(TAG, e.getMessage());
                 }
             } else
                 downloadAll.setEnabled(true);
         }
+    }
+
+    interface OnDeleteSongs {
+        void reloadSongs();
     }
 }

@@ -4,11 +4,6 @@
       tools:context=".PDFActivity">
 
     <item
-        android:id="@+id/action_settings"
-        android:title="@string/action_settings"
-        app:showAsAction="never"/>
-
-    <item
         android:id="@+id/scrollFaster"
         android:icon="@drawable/ic_arrow_downward_white_24dp"
         android:title="ScrollFaster"
@@ -26,4 +21,14 @@
         android:icon="@drawable/ic_play_arrow_white_24dp"
         android:title="StartOrStop"
         app:showAsAction="always"/>
+    <item
+        android:id="@+id/youtube"
+        android:icon="@drawable/ic_youtube"
+        android:title="PlatThisSongOnYT"
+        app:showAsAction="always"/>
+    <item
+        android:id="@+id/action_settings"
+        android:title="@string/action_settings"
+        app:showAsAction="never"/>
+
 </menu>

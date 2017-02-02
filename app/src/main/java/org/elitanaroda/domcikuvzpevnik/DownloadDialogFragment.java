@@ -19,17 +19,13 @@ public class DownloadDialogFragment extends DialogFragment {
 
     public DownloadDialogFragment() {}
 
-    public static DownloadDialogFragment newInstance() {
-        return new DownloadDialogFragment();
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setStyle(STYLE_NO_TITLE, getTheme());
         setCancelable(false);
         IntentFilter fileDownloadedFilter =
-                new IntentFilter(DownloadSongIntentService.BROADCAST_PROGRESS_UPDATE);
+                new IntentFilter(OneSongDownloadIS.BROADCAST_PROGRESS_UPDATE);
         LocalBroadcastManager.getInstance(getActivity()).
                 registerReceiver(new BroadcastReceiver() {
                     @Override

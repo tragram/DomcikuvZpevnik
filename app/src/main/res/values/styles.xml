@@ -25,4 +25,14 @@
     <style name="FullscreenActionBarStyle" parent="Widget.AppCompat.ActionBar">
         <item name="android:background">@color/black_overlay</item>
     </style>
+
+    <style name="ActionBarTitle" parent="android:Widget.TextView">
+        <!-- The action bar title font -->
+        <item name="android:fontFamily">sans-serif-light</item>
+        <!-- Customizes the size of the action bar title-->
+        <item name="android:textSize">16sp</item>
+        <!-- Customizes the color of the action bar title-->
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:gravity">center</item>
+    </style>
 </resources>

@@ -8,55 +8,24 @@
         android:icon="@drawable/ic_search_black_24px"
         android:title="@string/action_search"
         app:actionViewClass="android.support.v7.widget.SearchView"
-        app:showAsAction="ifRoom"/>
+        app:showAsAction="always"/>
+    <item
+        android:id="@+id/action_random"
+        android:icon="@drawable/ic_dice"
+        android:title="Show a random song"
+        app:showAsAction="always"/>
+    <item
+        android:id="@+id/action_languages"
+        android:icon="@drawable/ic_language_white_24dp"
+        android:title="Select languages"
+        app:showAsAction="always"/>
+    <item
+        android:id="@+id/action_sortBy"
+        android:icon="@drawable/ic_sort_white_24px"
+        android:title="Seřadit"
+        app:showAsAction="always"/>
     <item
         android:id="@+id/action_settings"
         android:title="@string/action_settings"
         app:showAsAction="never"/>
-    <item
-        android:id="@+id/sortBy"
-        android:icon="@drawable/ic_sort_white_24px"
-        android:title="Seřadit"
-        app:showAsAction="ifRoom">
-        <menu>
-            <item
-                android:id="@+id/sortByName"
-                android:title="Sort by name"/>
-            <item
-                android:id="@+id/sortByArtist"
-                android:title="Sort by artist"/>
-            <item
-                android:id="@+id/sortByDate"
-                android:title="Sort by date added"/>
-            <item
-                android:id="@+id/languages"
-                android:title="Select languages">
-                <menu>
-                    <item
-                        android:id="@+id/selectAll"
-                        android:title="Select/Unselect All"/>
-
-                    <group android:checkableBehavior="all">
-                        <item
-                            android:id="@+id/czech"
-                            android:title="Czech"/>
-
-                        <item
-                            android:id="@+id/english"
-                            android:title="English"/>
-                        <item
-                            android:id="@+id/slovak"
-                            android:title="Slovak"/>
-                        <item
-                            android:id="@+id/spanish"
-                            android:title="Spanish"/>
-                        <item
-                            android:id="@+id/other"
-                            android:title="Other"/>
-                    </group>
-                </menu>
-            </item>
-        </menu>
-
-    </item>
 </menu>

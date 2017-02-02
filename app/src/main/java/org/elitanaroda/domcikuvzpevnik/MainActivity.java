@@ -7,30 +7,20 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.google.android.youtube.player.YouTubeIntents;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.services.youtube.YouTube;
-import com.google.api.services.youtube.model.SearchListResponse;
-import com.google.api.services.youtube.model.SearchResult;
-
 import java.io.File;
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.Normalizer;
@@ -39,6 +29,7 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 /*
@@ -47,8 +38,9 @@ NFC send song
 permissions
 chci zas v tobě spát je pochybný
 */
+//<div>Icons made by <a href="http://www.flaticon.com/authors/dimi-kazak" title="Dimi Kazak">Dimi Kazak</a> from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
 
-public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener, FilterSongList.onFilterDone {
+public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener, FilterSongList.onFilterDone, SettingsFragment.OnDeleteSongs {
     //Comparatory pro řazení písniček v seznamu
     private static final SongComparator<Song> ALPHABETICAL_BY_TITLE = new SongComparator<Song>(0) {
         @Override
@@ -70,10 +62,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             int difference = o2.getmDateAdded() - o1.getmDateAdded();
             if (difference != 0)
                 return difference;
-            else {
-                return Normalizer.normalize(o1.getmTitle(), Normalizer.Form.NFD).
-                        compareTo(Normalizer.normalize(o2.getmTitle(), Normalizer.Form.NFD));
-            }
+            else
+                return ALPHABETICAL_BY_TITLE.compare(o1, o2);
         }
     };
     private static String TAG = "Main";
@@ -87,6 +77,64 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private SearchView searchView;
     private FilterSongList mFilterSongList;
     private SongComparator<Song> currentComparator;
+    PopupMenu.OnMenuItemClickListener onSortMenuClickListener = new PopupMenu.OnMenuItemClickListener() {
+        @Override
+        public boolean onMenuItemClick(MenuItem item) {
+            switch (item.getItemId()) {
+                case R.id.sortByName:
+                    currentComparator = ALPHABETICAL_BY_TITLE;
+                    mFilterSongList.filter(mSongList, currentLanguageSettings);
+                    break;
+                case R.id.sortByArtist:
+                    currentComparator = ALPHABETICAL_BY_ARTIST;
+                    mFilterSongList.filter(mSongList, currentLanguageSettings);
+                    break;
+                case R.id.sortByDate:
+                    currentComparator = BY_DATE;
+                    mFilterSongList.filter(mSongList, currentLanguageSettings);
+                    break;
+                default:
+                    Log.e(TAG, "Unexpected sort selected");
+                    break;
+            }
+            return true;
+        }
+    };
+    private PopupMenu languagePopupMenu;
+    PopupMenu.OnMenuItemClickListener onLanguageMenuClickListener = new PopupMenu.OnMenuItemClickListener() {
+        @Override
+        public boolean onMenuItemClick(MenuItem item) {
+            switch (item.getItemId()) {
+                case R.id.selectAll:
+                    Menu menu = languagePopupMenu.getMenu();
+                    un_selectAll(menu.findItem(R.id.czech), menu.findItem(R.id.english), menu.findItem(R.id.slovak), menu.findItem(R.id.spanish), menu.findItem(R.id.other));
+                    break;
+                case R.id.czech:
+                    changeLanguage(item, Helper.LanguageEnum.CZECH);
+                    languagePopupMenu.show();
+                    break;
+                case R.id.english:
+                    changeLanguage(item, Helper.LanguageEnum.ENGLISH);
+                    break;
+                case R.id.slovak:
+                    changeLanguage(item, Helper.LanguageEnum.SLOVAK);
+                    break;
+                case R.id.spanish:
+                    changeLanguage(item, Helper.LanguageEnum.SPANISH);
+                    break;
+                case R.id.other:
+                    changeLanguage(item, Helper.LanguageEnum.OTHER);
+                    break;
+                default:
+                    Log.e(TAG, "Unexpected language selected");
+                    break;
+            }
+            item.setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
+            item.setActionView(new View(mContext));
+            return false;
+        }
+    };
+    private PopupMenu sortPopupMenu;
 
     public List<Song> getmSongList() {
         return mSongList;
@@ -99,6 +147,10 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         mContext = getApplicationContext();
 
         mToolbar = (Toolbar) findViewById(R.id.mToolbar);
+        mToolbar.setTitle("Domčíkův");
+        mToolbar.setSubtitle("      Zpěvník");
+        mToolbar.setTitleTextAppearance(this, R.style.ActionBarTitle);
+        mToolbar.setSubtitleTextAppearance(this, R.style.ActionBarTitle);
         setSupportActionBar(mToolbar);
 
         songListView = (RecyclerView) findViewById(R.id.SongRView);
@@ -131,12 +183,32 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     }
 
     @Override
+    public void reloadSongs() {
+        mFilterSongList.filter(mSongList, currentLanguageSettings);
+    }
+
+    private void LoadSongsList(List<Song> songs, Comparator<Song> songComparator) {
+        mAdapter = new SongsAdapter(this, songComparator);
+        mAdapter.add(songs);
+        songListView.setAdapter(mAdapter);
+        //Čekání na výběr písně uživatelem
+        mAdapter.setOnItemClickListener(new SongsAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, Song song) {
+                if (view.getId() != R.id.YTButton) {
+                    openPDFDocument(song);
+                } else {
+                    new SearchAndOpenYT(mContext).openYoutubeVideo(song);
+                }
+            }
+        });
+    }
+
+    @Override
     protected void onStart() {
         super.onStart();
         currentComparator = loadComparatorPreferences();
         currentLanguageSettings = loadLanguagePreferences();
-        mFilterSongList.filter(mSongList, currentLanguageSettings, null);
-
         if (PDFActivity.hasInternetConnection(this)) {
             new UpdateDB().execute();
         } else {
@@ -146,37 +218,10 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         }
     }
 
-    private EnumSet<Helper.LanguageEnum> loadLanguagePreferences() {
-        SharedPreferences languagePreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        Set<String> languagePreferencesStringSet = languagePreferences.getStringSet(getString(R.string.language_settings), null);
-        EnumSet<Helper.LanguageEnum> languageSettings = EnumSet.noneOf(Helper.LanguageEnum.class);
-        if (languagePreferencesStringSet == null)
-            languageSettings = EnumSet.allOf(Helper.LanguageEnum.class);
-        else {
-            for (String language : languagePreferencesStringSet) {
-                languageSettings.add(Helper.toLanguageEnum(language));
-            }
-        }
-        return languageSettings;
-    }
-
-    private void saveLanguagePreferences() {
-        Set<String> stringSet = new HashSet<>();
-        for (Helper.LanguageEnum language : currentLanguageSettings) {
-            stringSet.add(language.toString());
-        }
-        Log.i(TAG, stringSet.toString());
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putStringSet(getString(R.string.language_settings), stringSet);
-        editor.apply();
-    }
-
     @Override
-    protected void onStop() {
-        super.onStop();
-        saveComparatorPreferences();
-        saveLanguagePreferences();
+    protected void onResume() {
+        super.onResume();
+        mFilterSongList.filter(mSongList, currentLanguageSettings, null);
     }
 
     private SongComparator<Song> loadComparatorPreferences() {
@@ -194,24 +239,86 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         }
     }
 
+    private EnumSet<Helper.LanguageEnum> loadLanguagePreferences() {
+        SharedPreferences languagePreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        Set<String> languagePreferencesStringSet = languagePreferences.getStringSet(getString(R.string.language_settings), null);
+        EnumSet<Helper.LanguageEnum> languageSettings = EnumSet.noneOf(Helper.LanguageEnum.class);
+        if (languagePreferencesStringSet == null)
+            languageSettings = EnumSet.allOf(Helper.LanguageEnum.class);
+        else {
+            for (String language : languagePreferencesStringSet) {
+                languageSettings.add(Helper.toLanguageEnum(language));
+            }
+        }
+        return languageSettings;
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        saveComparatorPreferences();
+        saveLanguagePreferences();
+    }
+
+    private void saveComparatorPreferences() {
+        SharedPreferences sharedPreferences = this.getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt(getString(R.string.sort_settings), currentComparator.ID);
+        editor.apply();
+    }
+
+    private void saveLanguagePreferences() {
+        Set<String> stringSet = new HashSet<>();
+        for (Helper.LanguageEnum language : currentLanguageSettings) {
+            stringSet.add(language.toString());
+        }
+        Log.i(TAG, stringSet.toString());
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putStringSet(getString(R.string.language_settings), stringSet);
+        editor.apply();
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
         MenuItem searchItem = menu.findItem(R.id.action_search);
         searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
         searchView.setOnQueryTextListener(this);
-
-        if (currentLanguageSettings.contains(Helper.LanguageEnum.CZECH))
-            menu.findItem(R.id.czech).setChecked(true);
-        if (currentLanguageSettings.contains(Helper.LanguageEnum.ENGLISH))
-            menu.findItem(R.id.english).setChecked(true);
-        if (currentLanguageSettings.contains(Helper.LanguageEnum.SPANISH))
-            menu.findItem(R.id.spanish).setChecked(true);
-        if (currentLanguageSettings.contains(Helper.LanguageEnum.SLOVAK))
-            menu.findItem(R.id.slovak).setChecked(true);
-        if (currentLanguageSettings.contains(Helper.LanguageEnum.OTHER))
-            menu.findItem(R.id.other).setChecked(true);
+        DisplayMetrics metrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        searchView.setMaxWidth(9 * metrics.widthPixels / 16);
         return true;
+    }
+
+    private void initiateSortMenu() {
+        sortPopupMenu = new PopupMenu(this, findViewById(R.id.action_sortBy));
+        sortPopupMenu.getMenuInflater().inflate(R.menu.sort_menu, sortPopupMenu.getMenu());
+        sortPopupMenu.setOnMenuItemClickListener(onSortMenuClickListener);
+    }
+
+    private void initiateLanguageMenu() {
+        languagePopupMenu = new PopupMenu(this, findViewById(R.id.action_languages));
+        languagePopupMenu.getMenuInflater().inflate(R.menu.language_menu, languagePopupMenu.getMenu());
+        setLanguagesChecked(languagePopupMenu.getMenu());
+        languagePopupMenu.setOnMenuItemClickListener(onLanguageMenuClickListener);
+    }
+
+    private void setLanguagesChecked(Menu menu) {
+        try {
+            if (currentLanguageSettings.contains(Helper.LanguageEnum.CZECH))
+                menu.findItem(R.id.czech).setChecked(true);
+            if (currentLanguageSettings.contains(Helper.LanguageEnum.ENGLISH))
+                menu.findItem(R.id.english).setChecked(true);
+            if (currentLanguageSettings.contains(Helper.LanguageEnum.SPANISH))
+                menu.findItem(R.id.spanish).setChecked(true);
+            if (currentLanguageSettings.contains(Helper.LanguageEnum.SLOVAK))
+                menu.findItem(R.id.slovak).setChecked(true);
+            if (currentLanguageSettings.contains(Helper.LanguageEnum.OTHER))
+                menu.findItem(R.id.other).setChecked(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -224,74 +331,80 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
         switch (item.getItemId()) {
             case R.id.action_settings:
+                SettingsFragment settingsFragment = new SettingsFragment();
+                settingsFragment.setOnDeleteSongsListener(this);
                 getFragmentManager().beginTransaction()
-                        .replace(R.id.content, new SettingsFragment())
+                        .replace(R.id.content, settingsFragment)
                         .addToBackStack("SettingsFragment")
                         .commit();
                 return true;
-            case R.id.sortByName:
-                currentComparator = ALPHABETICAL_BY_TITLE;
-                mFilterSongList.filter(mSongList, currentLanguageSettings);
+            case R.id.action_random:
+                openRandomSong();
                 return true;
-            case R.id.sortByArtist:
-                currentComparator = ALPHABETICAL_BY_ARTIST;
-                mFilterSongList.filter(mSongList, currentLanguageSettings);
+            case R.id.action_sortBy:
+                initiateSortMenu();
+                sortPopupMenu.show();
                 return true;
-            case R.id.sortByDate:
-                currentComparator = BY_DATE;
-                mFilterSongList.filter(mSongList, currentLanguageSettings);
-                return true;
-            //TODO: Dont dismiss the menu
-            case R.id.selectAll:
-                un_selectAll();
-                return true;
-            case R.id.czech:
-                changeLanguage(item, Helper.LanguageEnum.CZECH);
-                return true;
-            case R.id.english:
-                changeLanguage(item, Helper.LanguageEnum.ENGLISH);
-                return true;
-            case R.id.slovak:
-                changeLanguage(item, Helper.LanguageEnum.SLOVAK);
-                return true;
-            case R.id.spanish:
-                changeLanguage(item, Helper.LanguageEnum.SPANISH);
-                return true;
-            case R.id.other:
-                changeLanguage(item, Helper.LanguageEnum.OTHER);
+            case R.id.action_languages:
+                initiateLanguageMenu();
+                languagePopupMenu.show();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
-    private void saveComparatorPreferences() {
-        SharedPreferences sharedPreferences = this.getPreferences(Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        switch (currentComparator.ID) {
-            case 0:
-                editor.putInt(getString(R.string.sort_settings), 0);
-                break;
-            case 1:
-                editor.putInt(getString(R.string.sort_settings), 1);
-                break;
-            case 2:
-                editor.putInt(getString(R.string.sort_settings), 2);
-                break;
-            default:
-                Log.e(TAG, "current comparator has weird ID");
-                editor.putInt(getString(R.string.sort_settings), 0);
-                break;
+    private void openRandomSong() {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean ignore = sharedPref.getBoolean("randomIgnoresLanguage", false);
+        if (currentLanguageSettings.isEmpty() && !ignore) {
+            Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
+                    "How about choosing some languages? ;)", Snackbar.LENGTH_LONG);
+            snackbar.show();
+        } else {
+            actuallyOpenRandomSong(ignore);
         }
-        editor.apply();
+    }
+
+    private void actuallyOpenRandomSong(boolean ignore) {
+        Song randomSong;
+        boolean hasInternetConnection = PDFActivity.hasInternetConnection(this);
+
+        if (!ignore && !currentLanguageSettings.isEmpty()) {
+            do {
+                randomSong = mSongList.get(new Random().nextInt(mSongList.size()));
+            } while (!currentLanguageSettings.contains(randomSong.getmLanguage()));
+        } else
+            randomSong = mSongList.get(new Random().nextInt(mSongList.size()));
+
+        if (hasInternetConnection || randomSong.ismIsOnLocalStorage())
+            openPDFDocument(randomSong);
+        else {
+            Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
+                    "Random song not available on local storage and you are offline :(   Better luck next time!",
+                    Snackbar.LENGTH_LONG);
+            snackbar.show();
+        }
     }
 
     private void un_selectAll(MenuItem... items) {
-        //TODO: This
+        boolean anyUnchecked = false;
+        for (MenuItem item : items) {
+            if (!item.isChecked())
+                anyUnchecked = true;
+        }
+        for (MenuItem item : items) {
+            item.setChecked(anyUnchecked);
+        }
+        if (anyUnchecked)
+            currentLanguageSettings = EnumSet.allOf(Helper.LanguageEnum.class);
+        else
+            currentLanguageSettings = EnumSet.noneOf(Helper.LanguageEnum.class);
+        mFilterSongList.filter(mSongList, currentLanguageSettings);
     }
+
 
     private void changeLanguage(MenuItem item, Helper.LanguageEnum languageEnum) {
         if (item.isChecked()) {
@@ -320,41 +433,17 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     public void openPDFDocument(Song song) {
         Intent intent = new Intent(this, PDFActivity.class);
         intent.putExtra(PDFActivity.SONG_KEY, song);
-
-        if (!song.ismIsOnLocalStorage() && Helper.isMyServiceRunning(this, DownloadSongIntentService.class)) {
-            Intent localIntent = new Intent(DownloadSongIntentService.BROADCAST_STOP_BATCH_DOWNLOAD);
-            LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
-            startActivity(intent);
-            //TODO: Stáhne to jednu dvakrát, prostě to nenačte ten arraylist, pracuje to s původní proměnou
-            //SettingsFragment.downloadAllSongs(this, getmSongList());
-        } else
-            startActivity(intent);
+        startActivity(intent);
 
         //Bez tohohle by to při dalším otevření nic neotevřelo, pokud se to smazalo
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         song.setmIsOnLocalStorage(sharedPref.getBoolean("keepFiles", true));
     }
 
-    private void LoadSongsList(List<Song> songs, Comparator<Song> songComparator) {
-        mAdapter = new SongsAdapter(this, songComparator);
-        mAdapter.add(songs);
-        songListView.setAdapter(mAdapter);
-        //Čekání na výběr písně uživatelem
-        mAdapter.setOnItemClickListener(new SongsAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(View view, Song song) {
-                if (view.getId() != R.id.YTButton) {
-                    openPDFDocument(song);
-                } else
-                    new MainActivity.openYoutube().execute(song.getmArtist() + " - " + song.getmTitle());
-            }
-        });
-
-    }
-
     private class UpdateDB extends AsyncTask<Void, Void, String> {
         public static final String DB_URL = "http://elitanaroda.org/zpevnik/FinalDB.db";
         public File dbDir = new File(getFilesDir() + File.separator + "db");
+
         File localDB;
 
         @Override
@@ -370,7 +459,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                 Log.i(TAG, "Server:" + serverDBLastModified.toString() + "\n Local:" + localDB.lastModified());
                 connection.disconnect();
                 if (localDB.lastModified() < serverDBLastModified) {
-                    if (DownloadSongIntentService.Download(getBaseContext(), DB_URL, localDB) == null)
+                    if (OneSongDownloadIS.Download(getBaseContext(), DB_URL, localDB) == null)
                         return "Database updated";
                     else
                         return "Error updating the DB";
@@ -382,59 +471,19 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         }
 
         @Override
-        protected void onPostExecute(String s) {
-            super.onPostExecute(s);
-            if (s == null) {
+        protected void onPostExecute(String message) {
+            super.onPostExecute(message);
+            if (message == "Database updated") {
                 mSongList = getSongsFromDB();
                 mFilterSongList.filter(mSongList, currentLanguageSettings);
-            } else {
-                Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content), s, Snackbar.LENGTH_LONG);
+            }
+            if (message != null) {
+                Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_SHORT);
                 snackbar.show();
             }
         }
     }
 
-    private class openYoutube extends AsyncTask<String, Void, Void> {
-        private static final String YOUTUBE_DATA_API_KEY = "AIzaSyCcGkkc3xOCvUfo-4VTejHq5QrZh0qV90U";
-        private YouTube youtube;
 
-        @Override
-        protected Void doInBackground(String... params) {
-            try {
-                // This object is used to make YouTube Data API requests
-                youtube = new YouTube.Builder(new NetHttpTransport(), new JacksonFactory(), new HttpRequestInitializer() {
-                    public void initialize(HttpRequest request) throws IOException {
-                    }
-                }).setApplicationName(getPackageName()).build();
-
-                // Define the API request for retrieving search results.
-                YouTube.Search.List search = youtube.search().list("id");
-                search.setKey(YOUTUBE_DATA_API_KEY)
-                        .setQ(params[0])
-                        .setType("video")
-                        .setFields("items(id/videoId)")
-                        .setMaxResults((long) 1);
-
-                // Call the API
-                SearchListResponse searchResponse = search.execute();
-                List<SearchResult> searchResultList = searchResponse.getItems();
-
-                if (searchResultList != null && YouTubeIntents.isYouTubeInstalled(mContext))
-                    startActivity(YouTubeIntents.createPlayVideoIntentWithOptions(mContext, searchResultList.get(0).getId().getVideoId(), true, true));
-                else {
-                    Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content), "Couldn't load the YouTube App", Snackbar.LENGTH_LONG);
-                    snackbar.show();
-                }
-            } catch (GoogleJsonResponseException e) {
-                Log.e(TAG, "There was a service error: " + e.getDetails().getCode() + " : "
-                        + e.getDetails().getMessage());
-            } catch (IOException e) {
-                Log.e(TAG, "There was an IO error: " + e.getCause() + " : " + e.getMessage());
-            } catch (Throwable t) {
-                t.printStackTrace();
-            }
-            return null;
-        }
-    }
 }
 

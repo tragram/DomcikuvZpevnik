@@ -7,6 +7,11 @@
         android:title="Keep files"/>
     <Preference
         android:key="plsDownloadAll"
-        android:summary="WiFi v nedohlednu"
+        android:summary="WiFi v nedohlednu \nVarování: Sežere to 290MB"
         android:title="Jedu na hory"/>
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="randomIgnoresLanguage"
+        android:summary="On opening randomly a song,\nignore language preferences"
+        android:title="Ignore language on random"/>
 </PreferenceScreen>

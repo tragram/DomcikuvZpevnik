@@ -37,10 +37,9 @@ public class PDFActivity extends AppCompatActivity {
     private static final String TAG = "PDFViewActivity";
 
     private Song mSong;
-
-    //PDF variables
+    private Context mContext;
+    private Menu mMenu;
     private PDFView pdfView;
-    //Scrolling variables
     private boolean doScroll = false;
     private Handler mScrollHandler;
     //Doostření nových částí dokumentu
@@ -60,11 +59,11 @@ public class PDFActivity extends AppCompatActivity {
             mScrollHandler.postDelayed(this, 15);
         }
     };
-    private Context mContext;
-    private Menu mMenu;
+
     private BroadcastReceiver onFinishedReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            mSong.setmIsOnLocalStorage(true);
             Song song = intent.getParcelableExtra(SONG_KEY);
             displayFromFile(song.getmSongFile());
             Snackbar snackbar = Snackbar
@@ -129,10 +128,7 @@ public class PDFActivity extends AppCompatActivity {
             displayFromFile(mSong.getmSongFile());
             Log.i(TAG, "File Exists");
         } else if (hasInternetConnection(this)) {
-            startDownload(mSong);
-
-            DownloadDialogFragment downloadDialogFragment = new DownloadDialogFragment();
-            downloadDialogFragment.show(getFragmentManager(), DOWNLOADING_FRAGMENT_TAG);
+            downloadSong(mSong);
         } else {
             Snackbar snackbar = Snackbar
                     .make(findViewById(android.R.id.content), "No Internet Connection. \n " +
@@ -141,6 +137,22 @@ public class PDFActivity extends AppCompatActivity {
         }
     }
 
+    private void downloadSong(Song song) {
+        Intent serviceIntent = new Intent(this, OneSongDownloadIS.class);
+        serviceIntent.putExtra(SONG_KEY, song);
+        this.startService(serviceIntent);
+        DownloadDialogFragment downloadDialogFragment = new DownloadDialogFragment();
+        downloadDialogFragment.show(getFragmentManager(), DOWNLOADING_FRAGMENT_TAG);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        registerFinishedReceiver(this);
+        registerErrorReceiver(this);
+    }
+
+
     //Obnovit scrollování a refresh
     @Override
     public void onResume() {
@@ -148,8 +160,6 @@ public class PDFActivity extends AppCompatActivity {
         if (doScroll) {
             startScrolling();
         }
-        registerFinishedReceiver();
-        registerErrorReceiver();
     }
 
     //nechceme dál scrollovat a refreshovat
@@ -158,21 +168,30 @@ public class PDFActivity extends AppCompatActivity {
         super.onPause();
         if (doScroll)
             mScrollHandler.removeCallbacksAndMessages(null);
-        unregisterReceiver(onFinishedReceiver);
-        unregisterReceiver(onErrorReceiver);
     }
 
-    private void registerFinishedReceiver() {
+    @Override
+    protected void onStop() {
+        super.onStop();
+        try {
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(onFinishedReceiver);
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(onErrorReceiver);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void registerFinishedReceiver(Context context) {
         IntentFilter fileDownloadedFilter =
-                new IntentFilter(DownloadSongIntentService.BROADCAST_DOWNLOAD_FINISHED);
-        LocalBroadcastManager.getInstance(this).
+                new IntentFilter(OneSongDownloadIS.BROADCAST_DOWNLOAD_FINISHED);
+        LocalBroadcastManager.getInstance(context).
                 registerReceiver(onFinishedReceiver, fileDownloadedFilter);
     }
 
-    private void registerErrorReceiver() {
+    private void registerErrorReceiver(Context context) {
         IntentFilter showSnackbarFilter =
-                new IntentFilter(DownloadSongIntentService.BROADCAST_SHOW_ERROR);
-        LocalBroadcastManager.getInstance(this).
+                new IntentFilter(OneSongDownloadIS.BROADCAST_SHOW_ERROR);
+        LocalBroadcastManager.getInstance(context).
                 registerReceiver(onErrorReceiver, showSnackbarFilter);
     }
 
@@ -185,6 +204,9 @@ public class PDFActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.youtube:
+                new SearchAndOpenYT(this).openYoutubeVideo(mSong);
+                break;
             case R.id.startStop:
                 if (doScroll) {
                     stopScrolling();
@@ -230,7 +252,7 @@ public class PDFActivity extends AppCompatActivity {
     }
 
     private void startDownload(Song songToDownload) {
-        Intent serviceIntent = new Intent(this, DownloadSongIntentService.class);
+        Intent serviceIntent = new Intent(this, OneSongDownloadIS.class);
         serviceIntent.putExtra(SONG_KEY, songToDownload);
         this.startService(serviceIntent);
     }
@@ -252,13 +274,13 @@ public class PDFActivity extends AppCompatActivity {
                     })
                     .load();
         } else
-            Log.e(TAG, "File doesnt exists, couldnt open it.");
+            Log.e(TAG, "File doesn't exist, couldn't open it.");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
+        //TODO: při vypnutí se nesmaže, jen při zpět
         //pokud je zvolena možnost mazat, tak smazat
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         if (!sharedPref.getBoolean("keepFiles", true)) {
