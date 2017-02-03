@@ -4,7 +4,4 @@
     <string name="action_settings">Nastavení</string>
     <string name="language_settings">org.elitanaroda.domcikuvzpevnik.language</string>
     <string name="sort_settings">org.elitanaroda.domcikuvzpevnik.sort</string>
-
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

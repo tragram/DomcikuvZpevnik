@@ -21,7 +21,6 @@ import java.util.List;
 
 public class SongsAdapter extends
         RecyclerView.Adapter<SongsAdapter.ViewHolder> {
-
     private final String TAG = "SongsAdapter";
     private final Comparator<Song> mComparator;
     //TODO: Improve these methods
@@ -64,7 +63,6 @@ public class SongsAdapter extends
     private Context mContext;
     private OnItemClickListener listener;
     private SortedList<Song> mSongs;
-
     public SongsAdapter(Context context, Comparator<Song> comparator) {
         //this.mSongs = songs;
         this.mContext = context;
@@ -147,12 +145,12 @@ public class SongsAdapter extends
         public ImageButton YTButton;
         public ImageView checkmarkIV;
 
-        public ViewHolder(final View itemView) {
-            super(itemView);
-            this.titleTextView = (TextView) itemView.findViewById(R.id.title);
-            this.artistTextView = (TextView) itemView.findViewById(R.id.artist);
-            this.YTButton = (ImageButton) itemView.findViewById(R.id.YTButton);
-            this.checkmarkIV = (ImageView) itemView.findViewById(R.id.checkmarkImage);
+        public ViewHolder(final View songItemView) {
+            super(songItemView);
+            this.titleTextView = (TextView) songItemView.findViewById(R.id.title);
+            this.artistTextView = (TextView) songItemView.findViewById(R.id.artist);
+            this.YTButton = (ImageButton) songItemView.findViewById(R.id.YTButton);
+            this.checkmarkIV = (ImageView) songItemView.findViewById(R.id.checkmarkImage);
 
             YTButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -166,14 +164,14 @@ public class SongsAdapter extends
                 }
             });
 
-            itemView.setOnClickListener(new View.OnClickListener() {
+            songItemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     // Triggers click upwards to the adapter on click
                     if (listener != null) {
                         int position = getAdapterPosition();
                         if (position != RecyclerView.NO_POSITION) {
-                            listener.onItemClick(itemView, mSongs.get(position));
+                            listener.onItemClick(songItemView, mSongs.get(position));
                         }
                     }
                 }

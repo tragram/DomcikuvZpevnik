@@ -15,8 +15,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-
-//TODO: Rewrite this as a normal service
 public class OneSongDownloadIS extends IntentService {
     private static final String TAG = "SongDownloadService";
     private static final String PREFIX = "org.elitanaroda.domkvzpvnk.downloadsongintentservice";

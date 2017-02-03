@@ -107,28 +107,33 @@ public class PDFActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         this.mContext = getApplicationContext();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
 
         //Inicializace UI
         setContentView(R.layout.activity_pdfview);
         pdfView = (PDFView) findViewById(R.id.pdfView);
+
         Toolbar mToolbar = (Toolbar) findViewById(R.id.mToolbar);
+        MainActivity.domczeekizeToolbar(this, mToolbar);
         setSupportActionBar(mToolbar);
-        if (getSupportActionBar() != null)
-            getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         Intent intent = getIntent();
         mSong = intent.getParcelableExtra(SONG_KEY);
 
         mScrollHandler = new Handler();
 
+        showSong(mSong);
+    }
+
+    private void showSong(Song songToOpen) {
         //Get file location
         //Pokud už máme soubor, není nutné ho znovu stahovat
         //TODO:Check for SD CARD
-        if (mSong.ismIsOnLocalStorage()) {
-            displayFromFile(mSong.getmSongFile());
+        if (songToOpen.ismIsOnLocalStorage()) {
+            displayFromFile(songToOpen.getmSongFile());
             Log.i(TAG, "File Exists");
         } else if (hasInternetConnection(this)) {
-            downloadSong(mSong);
+            downloadSong(songToOpen);
         } else {
             Snackbar snackbar = Snackbar
                     .make(findViewById(android.R.id.content), "No Internet Connection. \n " +

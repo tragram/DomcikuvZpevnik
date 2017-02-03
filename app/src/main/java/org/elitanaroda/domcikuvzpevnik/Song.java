@@ -26,7 +26,7 @@ public class Song implements Parcelable {
     private String mArtist;
     private int mDateAdded;
 
-    private Helper.LanguageEnum mLanguage;
+    private LanguageManager.LanguageEnum mLanguage;
     private boolean mHasPDFgen;
     private boolean mIsOnLocalStorage;
     private File mSongFile;
@@ -36,7 +36,7 @@ public class Song implements Parcelable {
         this.mTitle = title;
         this.mArtist = artist;
         this.mDateAdded = dateAdded;
-        this.mLanguage = Helper.LanguageEnum.valueOf(language);
+        this.mLanguage = LanguageManager.LanguageEnum.valueOf(language);
         if (hasPDFgen == 0)
             this.mHasPDFgen = false;
         else
@@ -54,7 +54,7 @@ public class Song implements Parcelable {
         this.mTitle = in.readString();
         this.mArtist = in.readString();
         this.mDateAdded = in.readInt();
-        this.mLanguage = Helper.LanguageEnum.valueOf(in.readString());
+        this.mLanguage = LanguageManager.LanguageEnum.valueOf(in.readString());
         this.mHasPDFgen = (boolean) in.readValue(null);
         this.mIsOnLocalStorage = (boolean) in.readValue(null);
         this.mSongFile = new File(in.readString());
@@ -72,7 +72,7 @@ public class Song implements Parcelable {
         return mArtist;
     }
 
-    public Helper.LanguageEnum getmLanguage() {
+    public LanguageManager.LanguageEnum getmLanguage() {
         return mLanguage;
     }
 

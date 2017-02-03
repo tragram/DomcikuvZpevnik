@@ -10,13 +10,7 @@ import java.text.Normalizer;
  */
 
 public class Helper {
-    public static LanguageEnum toLanguageEnum(String language) {
-        try {
-            return LanguageEnum.valueOf(language);
-        } catch (Exception e) {
-            return LanguageEnum.OTHER;
-        }
-    }
+    private Helper() {}
 
     public static String makeTextNiceAgain(String uglyText) {
         return Normalizer.normalize(uglyText.toLowerCase(), Normalizer.Form.NFD)
@@ -33,5 +27,4 @@ public class Helper {
         return false;
     }
 
-    public enum LanguageEnum {CZECH, ENGLISH, SLOVAK, SPANISH, OTHER}
 }

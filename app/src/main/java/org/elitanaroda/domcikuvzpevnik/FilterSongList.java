@@ -4,7 +4,6 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -15,7 +14,7 @@ import java.util.List;
 public class FilterSongList {
     private final static String TAG = "FilterSongList";
     private List<Song> mSongList;
-    private EnumSet<Helper.LanguageEnum> languageEna;
+    private EnumSet<LanguageManager.LanguageEnum> languageEna;
     private String query;
     private onFilterDone onFilterDoneListener;
 
@@ -39,18 +38,18 @@ public class FilterSongList {
             return songs;
     }
 
-    public void filter(List<Song> mSongList, EnumSet<Helper.LanguageEnum> languageEna) {
+    public void filter(List<Song> mSongList, EnumSet<LanguageManager.LanguageEnum> languageEna) {
         filter(mSongList, languageEna, query);
     }
 
-    public void filter(List<Song> mSongList, EnumSet<Helper.LanguageEnum> languageEna, String query) {
+    public void filter(List<Song> mSongList, EnumSet<LanguageManager.LanguageEnum> languageEna, String query) {
         this.mSongList = mSongList;
         this.languageEna = languageEna;
         this.query = query;
         new FilterAndReloadDatList().execute();
     }
 
-    private List<Song> filterByLanguage(List<Song> completeList, EnumSet<Helper.LanguageEnum> languageSetFilter) {
+    private List<Song> filterByLanguage(List<Song> completeList, EnumSet<LanguageManager.LanguageEnum> languageSetFilter) {
         List<Song> filteredSongList = new ArrayList<>();
         for (Song song : completeList) {
             if (languageSetFilter.contains(song.getmLanguage())) {

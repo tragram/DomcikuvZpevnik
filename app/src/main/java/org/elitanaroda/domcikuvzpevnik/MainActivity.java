@@ -23,14 +23,11 @@ import android.view.View;
 import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.Normalizer;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 
 /*
 Global TODO:
@@ -41,31 +38,6 @@ chci zas v tobě spát je pochybný
 //<div>Icons made by <a href="http://www.flaticon.com/authors/dimi-kazak" title="Dimi Kazak">Dimi Kazak</a> from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
 
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener, FilterSongList.onFilterDone, SettingsFragment.OnDeleteSongs {
-    //Comparatory pro řazení písniček v seznamu
-    private static final SongComparator<Song> ALPHABETICAL_BY_TITLE = new SongComparator<Song>(0) {
-        @Override
-        public int compare(Song o1, Song o2) {
-            return Normalizer.normalize(o1.getmTitle(), Normalizer.Form.NFD).
-                    compareTo(Normalizer.normalize(o2.getmTitle(), Normalizer.Form.NFD));
-        }
-    };
-    private static final SongComparator<Song> ALPHABETICAL_BY_ARTIST = new SongComparator<Song>(1) {
-        @Override
-        public int compare(Song o1, Song o2) {
-            return Normalizer.normalize(o1.getmArtist(), Normalizer.Form.NFD).
-                    compareTo(Normalizer.normalize(o2.getmArtist(), Normalizer.Form.NFD));
-        }
-    };
-    private static final SongComparator<Song> BY_DATE = new SongComparator<Song>(2) {
-        @Override
-        public int compare(Song o1, Song o2) {
-            int difference = o2.getmDateAdded() - o1.getmDateAdded();
-            if (difference != 0)
-                return difference;
-            else
-                return ALPHABETICAL_BY_TITLE.compare(o1, o2);
-        }
-    };
     private static String TAG = "Main";
     private DBHelper mDBHelper;
     private RecyclerView songListView;
@@ -73,25 +45,25 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private SongsAdapter mAdapter;
     private List<Song> mSongList;
     private Context mContext;
-    private EnumSet<Helper.LanguageEnum> currentLanguageSettings;
-    private SearchView searchView;
+    private EnumSet<LanguageManager.LanguageEnum> mCurrentLanguageSettings;
+    private SearchView mSearchView;
     private FilterSongList mFilterSongList;
-    private SongComparator<Song> currentComparator;
+    private SongComparator<Song> mCurrentComparator;
     PopupMenu.OnMenuItemClickListener onSortMenuClickListener = new PopupMenu.OnMenuItemClickListener() {
         @Override
         public boolean onMenuItemClick(MenuItem item) {
             switch (item.getItemId()) {
-                case R.id.sortByName:
-                    currentComparator = ALPHABETICAL_BY_TITLE;
-                    mFilterSongList.filter(mSongList, currentLanguageSettings);
+                case R.id.sortByTitle:
+                    mCurrentComparator = ComparatorManager.ALPHABETICAL_BY_TITLE;
+                    mFilterSongList.filter(mSongList, mCurrentLanguageSettings);
                     break;
                 case R.id.sortByArtist:
-                    currentComparator = ALPHABETICAL_BY_ARTIST;
-                    mFilterSongList.filter(mSongList, currentLanguageSettings);
+                    mCurrentComparator = ComparatorManager.ALPHABETICAL_BY_ARTIST;
+                    mFilterSongList.filter(mSongList, mCurrentLanguageSettings);
                     break;
                 case R.id.sortByDate:
-                    currentComparator = BY_DATE;
-                    mFilterSongList.filter(mSongList, currentLanguageSettings);
+                    mCurrentComparator = ComparatorManager.BY_DATE;
+                    mFilterSongList.filter(mSongList, mCurrentLanguageSettings);
                     break;
                 default:
                     Log.e(TAG, "Unexpected sort selected");
@@ -100,6 +72,9 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             return true;
         }
     };
+    private ComparatorManager mComparatorManager;
+    private LanguageManager mLanguageManager;
+    private PopupMenu sortPopupMenu;
     private PopupMenu languagePopupMenu;
     PopupMenu.OnMenuItemClickListener onLanguageMenuClickListener = new PopupMenu.OnMenuItemClickListener() {
         @Override
@@ -110,20 +85,19 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                     un_selectAll(menu.findItem(R.id.czech), menu.findItem(R.id.english), menu.findItem(R.id.slovak), menu.findItem(R.id.spanish), menu.findItem(R.id.other));
                     break;
                 case R.id.czech:
-                    changeLanguage(item, Helper.LanguageEnum.CZECH);
-                    languagePopupMenu.show();
+                    changeLanguage(item, LanguageManager.LanguageEnum.CZECH);
                     break;
                 case R.id.english:
-                    changeLanguage(item, Helper.LanguageEnum.ENGLISH);
+                    changeLanguage(item, LanguageManager.LanguageEnum.ENGLISH);
                     break;
                 case R.id.slovak:
-                    changeLanguage(item, Helper.LanguageEnum.SLOVAK);
+                    changeLanguage(item, LanguageManager.LanguageEnum.SLOVAK);
                     break;
                 case R.id.spanish:
-                    changeLanguage(item, Helper.LanguageEnum.SPANISH);
+                    changeLanguage(item, LanguageManager.LanguageEnum.SPANISH);
                     break;
                 case R.id.other:
-                    changeLanguage(item, Helper.LanguageEnum.OTHER);
+                    changeLanguage(item, LanguageManager.LanguageEnum.OTHER);
                     break;
                 default:
                     Log.e(TAG, "Unexpected language selected");
@@ -134,7 +108,14 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             return false;
         }
     };
-    private PopupMenu sortPopupMenu;
+
+    public static Toolbar domczeekizeToolbar(Context context, Toolbar toolbar) {
+        toolbar.setTitle("Domčíkův");
+        toolbar.setSubtitle("      Zpěvník");
+        toolbar.setTitleTextAppearance(context, R.style.ActionBarTitle);
+        toolbar.setSubtitleTextAppearance(context, R.style.ActionBarTitle);
+        return toolbar;
+    }
 
     public List<Song> getmSongList() {
         return mSongList;
@@ -147,23 +128,54 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         mContext = getApplicationContext();
 
         mToolbar = (Toolbar) findViewById(R.id.mToolbar);
-        mToolbar.setTitle("Domčíkův");
-        mToolbar.setSubtitle("      Zpěvník");
-        mToolbar.setTitleTextAppearance(this, R.style.ActionBarTitle);
-        mToolbar.setSubtitleTextAppearance(this, R.style.ActionBarTitle);
+        domczeekizeToolbar(this, mToolbar);
         setSupportActionBar(mToolbar);
 
-        songListView = (RecyclerView) findViewById(R.id.SongRView);
-        songListView.setLayoutManager(new LinearLayoutManager(this));
-        songListView.setHasFixedSize(true);
-        songListView.addItemDecoration(new SimpleDividerItemDecoration(this));
-
+        songListView = createRecyclerView(this);
         mSongList = getSongsFromDB();
 
+        mComparatorManager = new ComparatorManager(this);
+        mLanguageManager = new LanguageManager(this);
         mFilterSongList = new FilterSongList();
         mFilterSongList.setOnFilterDoneListener(this);
+    }
+
+    private RecyclerView createRecyclerView(Context context) {
+        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.SongRView);
+        recyclerView.setLayoutManager(new LinearLayoutManager(context));
+        recyclerView.setHasFixedSize(true);
+        recyclerView.addItemDecoration(new SimpleDividerItemDecoration(context));
         //SnapHelper snapHelper = new LinearSnapHelper();
         //snapHelper.attachToRecyclerView(songListView);
+        return recyclerView;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mCurrentComparator = mComparatorManager.getComparatorPreferences();
+        mCurrentLanguageSettings = mLanguageManager.getLanguagePreferences();
+        if (PDFActivity.hasInternetConnection(this)) {
+            new UpdateDB().execute();
+        } else {
+            Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
+                    "No internet connection, couldn't update the DB", Snackbar.LENGTH_LONG);
+            snackbar.show();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mFilterSongList.filter(mSongList, mCurrentLanguageSettings, null);
+    }
+
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mComparatorManager.saveComparator(mCurrentComparator);
+        mLanguageManager.saveLanguages(mCurrentLanguageSettings);
     }
 
     private List<Song> getSongsFromDB() {
@@ -179,12 +191,12 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     @Override
     public void onFilter(List<Song> songs) {
-        LoadSongsList(songs, currentComparator);
+        LoadSongsList(songs, mCurrentComparator);
     }
 
     @Override
     public void reloadSongs() {
-        mFilterSongList.filter(mSongList, currentLanguageSettings);
+        mFilterSongList.filter(mSongList, mCurrentLanguageSettings);
     }
 
     private void LoadSongsList(List<Song> songs, Comparator<Song> songComparator) {
@@ -205,89 +217,14 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        currentComparator = loadComparatorPreferences();
-        currentLanguageSettings = loadLanguagePreferences();
-        if (PDFActivity.hasInternetConnection(this)) {
-            new UpdateDB().execute();
-        } else {
-            Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
-                    "No internet connection, couldn't update the DB", Snackbar.LENGTH_LONG);
-            snackbar.show();
-        }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        mFilterSongList.filter(mSongList, currentLanguageSettings, null);
-    }
-
-    private SongComparator<Song> loadComparatorPreferences() {
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        switch (sharedPref.getInt(getString(R.string.sort_settings), 0)) {
-            case 0:
-                return ALPHABETICAL_BY_TITLE;
-            case 1:
-                return ALPHABETICAL_BY_ARTIST;
-            case 2:
-                return BY_DATE;
-            default:
-                Log.e(TAG, "Unexpected value in sort_settings");
-                return ALPHABETICAL_BY_TITLE;
-        }
-    }
-
-    private EnumSet<Helper.LanguageEnum> loadLanguagePreferences() {
-        SharedPreferences languagePreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        Set<String> languagePreferencesStringSet = languagePreferences.getStringSet(getString(R.string.language_settings), null);
-        EnumSet<Helper.LanguageEnum> languageSettings = EnumSet.noneOf(Helper.LanguageEnum.class);
-        if (languagePreferencesStringSet == null)
-            languageSettings = EnumSet.allOf(Helper.LanguageEnum.class);
-        else {
-            for (String language : languagePreferencesStringSet) {
-                languageSettings.add(Helper.toLanguageEnum(language));
-            }
-        }
-        return languageSettings;
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        saveComparatorPreferences();
-        saveLanguagePreferences();
-    }
-
-    private void saveComparatorPreferences() {
-        SharedPreferences sharedPreferences = this.getPreferences(Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putInt(getString(R.string.sort_settings), currentComparator.ID);
-        editor.apply();
-    }
-
-    private void saveLanguagePreferences() {
-        Set<String> stringSet = new HashSet<>();
-        for (Helper.LanguageEnum language : currentLanguageSettings) {
-            stringSet.add(language.toString());
-        }
-        Log.i(TAG, stringSet.toString());
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putStringSet(getString(R.string.language_settings), stringSet);
-        editor.apply();
-    }
-
-    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
         MenuItem searchItem = menu.findItem(R.id.action_search);
-        searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
-        searchView.setOnQueryTextListener(this);
+        mSearchView = (SearchView) MenuItemCompat.getActionView(searchItem);
+        mSearchView.setOnQueryTextListener(this);
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        searchView.setMaxWidth(9 * metrics.widthPixels / 16);
+        mSearchView.setMaxWidth(9 * metrics.widthPixels / 16);
         return true;
     }
 
@@ -306,15 +243,15 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     private void setLanguagesChecked(Menu menu) {
         try {
-            if (currentLanguageSettings.contains(Helper.LanguageEnum.CZECH))
+            if (mCurrentLanguageSettings.contains(LanguageManager.LanguageEnum.CZECH))
                 menu.findItem(R.id.czech).setChecked(true);
-            if (currentLanguageSettings.contains(Helper.LanguageEnum.ENGLISH))
+            if (mCurrentLanguageSettings.contains(LanguageManager.LanguageEnum.ENGLISH))
                 menu.findItem(R.id.english).setChecked(true);
-            if (currentLanguageSettings.contains(Helper.LanguageEnum.SPANISH))
+            if (mCurrentLanguageSettings.contains(LanguageManager.LanguageEnum.SPANISH))
                 menu.findItem(R.id.spanish).setChecked(true);
-            if (currentLanguageSettings.contains(Helper.LanguageEnum.SLOVAK))
+            if (mCurrentLanguageSettings.contains(LanguageManager.LanguageEnum.SLOVAK))
                 menu.findItem(R.id.slovak).setChecked(true);
-            if (currentLanguageSettings.contains(Helper.LanguageEnum.OTHER))
+            if (mCurrentLanguageSettings.contains(LanguageManager.LanguageEnum.OTHER))
                 menu.findItem(R.id.other).setChecked(true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -323,8 +260,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     @Override
     public void onBackPressed() {
-        if (!searchView.isIconified()) {
-            searchView.onActionViewCollapsed();
+        if (!mSearchView.isIconified()) {
+            mSearchView.onActionViewCollapsed();
         } else
             super.onBackPressed();
     }
@@ -359,7 +296,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private void openRandomSong() {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         boolean ignore = sharedPref.getBoolean("randomIgnoresLanguage", false);
-        if (currentLanguageSettings.isEmpty() && !ignore) {
+        if (mCurrentLanguageSettings.isEmpty() && !ignore) {
             Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
                     "How about choosing some languages? ;)", Snackbar.LENGTH_LONG);
             snackbar.show();
@@ -372,10 +309,10 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         Song randomSong;
         boolean hasInternetConnection = PDFActivity.hasInternetConnection(this);
 
-        if (!ignore && !currentLanguageSettings.isEmpty()) {
+        if (!ignore) {
             do {
                 randomSong = mSongList.get(new Random().nextInt(mSongList.size()));
-            } while (!currentLanguageSettings.contains(randomSong.getmLanguage()));
+            } while (!mCurrentLanguageSettings.contains(randomSong.getmLanguage()));
         } else
             randomSong = mSongList.get(new Random().nextInt(mSongList.size()));
 
@@ -399,24 +336,23 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             item.setChecked(anyUnchecked);
         }
         if (anyUnchecked)
-            currentLanguageSettings = EnumSet.allOf(Helper.LanguageEnum.class);
+            mCurrentLanguageSettings = EnumSet.allOf(LanguageManager.LanguageEnum.class);
         else
-            currentLanguageSettings = EnumSet.noneOf(Helper.LanguageEnum.class);
-        mFilterSongList.filter(mSongList, currentLanguageSettings);
+            mCurrentLanguageSettings = EnumSet.noneOf(LanguageManager.LanguageEnum.class);
+        mFilterSongList.filter(mSongList, mCurrentLanguageSettings);
     }
 
 
-    private void changeLanguage(MenuItem item, Helper.LanguageEnum languageEnum) {
+    private void changeLanguage(MenuItem item, LanguageManager.LanguageEnum languageEnum) {
         if (item.isChecked()) {
             item.setChecked(false);
-            currentLanguageSettings.remove(languageEnum);
+            mCurrentLanguageSettings.remove(languageEnum);
         } else {
             item.setChecked(true);
-            currentLanguageSettings.add(languageEnum);
+            mCurrentLanguageSettings.add(languageEnum);
         }
-        mFilterSongList.filter(mSongList, currentLanguageSettings);
+        mFilterSongList.filter(mSongList, mCurrentLanguageSettings);
     }
-
 
     @Override
     public boolean onQueryTextSubmit(String query) {
@@ -425,7 +361,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     @Override
     public boolean onQueryTextChange(String newText) {
-        mFilterSongList.filter(mSongList, currentLanguageSettings, newText);
+        mFilterSongList.filter(mSongList, mCurrentLanguageSettings, newText);
         return true;
     }
 
@@ -475,7 +411,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             super.onPostExecute(message);
             if (message == "Database updated") {
                 mSongList = getSongsFromDB();
-                mFilterSongList.filter(mSongList, currentLanguageSettings);
+                mFilterSongList.filter(mSongList, mCurrentLanguageSettings);
             }
             if (message != null) {
                 Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_SHORT);
