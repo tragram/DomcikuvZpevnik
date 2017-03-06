@@ -97,7 +97,7 @@ public class SongsAdapter extends
         //ImageButton YTButton = holder.YTButton;
 
         //TODO: Při stažení nebo smazání upravit stav
-        if (new File(mContext.getFilesDir().getAbsolutePath() + File.separatorChar + song.getFileName()).isFile())
+        if (song.ismIsOnLocalStorage())
             holder.checkmarkIV.setVisibility(View.VISIBLE);
         else
             holder.checkmarkIV.setVisibility(View.INVISIBLE);

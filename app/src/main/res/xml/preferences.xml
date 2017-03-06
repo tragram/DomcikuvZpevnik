@@ -7,8 +7,8 @@
         android:title="Keep files"/>
     <Preference
         android:key="plsDownloadAll"
-        android:summary="WiFi v nedohlednu \nVarování: Sežere to 290MB"
-        android:title="Jedu na hory"/>
+        android:summary="Downloads all songs available for offline use later."
+        android:title="Save songs"/>
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="randomIgnoresLanguage"

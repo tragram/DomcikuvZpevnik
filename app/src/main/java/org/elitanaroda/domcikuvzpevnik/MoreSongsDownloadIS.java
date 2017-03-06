@@ -7,6 +7,8 @@ import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.Context;
 import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Parcelable;
 import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
@@ -24,7 +26,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class MoreSongsDownloadIS extends IntentService {
-    private static final String TAG = "SongsDownloadService";
+    private static final String TAG = "MoreSongsDownloadService";
     private static final String PREFIX = "org.elitanaroda.domkvzpvnk.downloadsongintentservice";
     public static final String BROADCAST_STOP_BATCH_DOWNLOAD = PREFIX + ".STOP";
     private static final String PDF_DIR = "http://elitanaroda.org/zpevnik/pdfs/";
@@ -40,7 +42,12 @@ public class MoreSongsDownloadIS extends IntentService {
     }
 
     public static String DownloadSong(Context context, Song song) {
-        return Download(context, PDF_DIR + song.getFileName(), song.getmSongFile());
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
+        if (cm.isActiveNetworkMetered()) {
+            return Download(context, PDF_DIR + song.getFileName(false), song.getmSongFileComp());
+        } else {
+            return Download(context, PDF_DIR + song.getFileName(true), song.getmSongFileSken());
+        }
     }
 
     public static String Download(Context context, String urlToDownload, File downloadToFile) {
@@ -142,7 +149,7 @@ public class MoreSongsDownloadIS extends IntentService {
                 if (!((Song) song).ismIsOnLocalStorage()) {
                     result = DownloadSong(this, (Song) song);
                     if (result != null)
-                        Log.e(TAG, ((Song) song).getFileName() + " not downloaded:\n" + result);
+                        Log.e(TAG, ((Song) song).getFileName(true) + " not downloaded:\n" + result);
                 }
                 progress++;
                 updateNotificationProgress(progress, total);

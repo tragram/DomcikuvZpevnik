@@ -50,7 +50,7 @@ public class PDFActivity extends AppCompatActivity {
             mScrollHandler.postDelayed(this, 700);
         }
     };
-    private float mScrollSpeed = 1f;
+    private float mScrollSpeed = 0.8f;
     //Posun obrazu
     private final Runnable ScrollRunnable = new Runnable() {
         @Override
@@ -65,13 +65,15 @@ public class PDFActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             mSong.setmIsOnLocalStorage(true);
             Song song = intent.getParcelableExtra(SONG_KEY);
-            displayFromFile(song.getmSongFile());
+            //song.setmIsOnLocalStorage(true);
+            openBestQualityAvailable(song);
             Snackbar snackbar = Snackbar
                     .make(findViewById(android.R.id.content),
-                            "File downloaded!", Snackbar.LENGTH_LONG);
+                            "File downloaded!", Snackbar.LENGTH_SHORT);
             snackbar.show();
         }
     };
+
     private BroadcastReceiver onErrorReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -126,12 +128,10 @@ public class PDFActivity extends AppCompatActivity {
     }
 
     private void showSong(Song songToOpen) {
-        //Get file location
         //Pokud už máme soubor, není nutné ho znovu stahovat
         //TODO:Check for SD CARD
         if (songToOpen.ismIsOnLocalStorage()) {
-            displayFromFile(songToOpen.getmSongFile());
-            Log.i(TAG, "File Exists");
+            openBestQualityAvailable(songToOpen);
         } else if (hasInternetConnection(this)) {
             downloadSong(songToOpen);
         } else {
@@ -140,6 +140,15 @@ public class PDFActivity extends AppCompatActivity {
                             "File not available on local storage, sorry.", Snackbar.LENGTH_LONG);
             snackbar.show();
         }
+    }
+
+    private void openBestQualityAvailable(Song songToOpen) {
+        //If it's on local storage, open high quality if available, else open low quality
+        if (songToOpen.getmSongFileSken().isFile())
+            displayFromFile(songToOpen.getmSongFileSken());
+        else
+            displayFromFile(songToOpen.getmSongFileComp());
+        Log.i(TAG, "File Exists");
     }
 
     private void downloadSong(Song song) {
@@ -290,7 +299,7 @@ public class PDFActivity extends AppCompatActivity {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         if (!sharedPref.getBoolean("keepFiles", true)) {
             try {
-                deleteFile(mSong.getmSongFile().getName());
+                deleteFile(mSong.getmSongFileSken().getName());
             } catch (Exception e) {
                 Log.e(TAG, e.getMessage());
             }

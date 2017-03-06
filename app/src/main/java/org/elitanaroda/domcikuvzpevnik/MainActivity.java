@@ -136,8 +136,13 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
         mComparatorManager = new ComparatorManager(this);
         mLanguageManager = new LanguageManager(this);
+
         mFilterSongList = new FilterSongList();
         mFilterSongList.setOnFilterDoneListener(this);
+
+        mCurrentComparator = mComparatorManager.getComparatorPreferences();
+        mCurrentLanguageSettings = mLanguageManager.getLanguagePreferences();
+        mFilterSongList.filter(mSongList, mCurrentLanguageSettings, null);
     }
 
     private RecyclerView createRecyclerView(Context context) {
@@ -167,7 +172,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     @Override
     protected void onResume() {
         super.onResume();
-        mFilterSongList.filter(mSongList, mCurrentLanguageSettings, null);
+        /*RecyclerView.Adapter mAdapter = songListView.getAdapter();
+        mAdapter.notifyItemRangeChanged(0, mAdapter.getItemCount());*/
     }
 
 
@@ -369,6 +375,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     public void openPDFDocument(Song song) {
         Intent intent = new Intent(this, PDFActivity.class);
         intent.putExtra(PDFActivity.SONG_KEY, song);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
 
         //Bez tohohle by to při dalším otevření nic neotevřelo, pokud se to smazalo
@@ -419,7 +426,5 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             }
         }
     }
-
-
 }
 

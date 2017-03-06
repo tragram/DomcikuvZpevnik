@@ -29,7 +29,8 @@ public class Song implements Parcelable {
     private LanguageManager.LanguageEnum mLanguage;
     private boolean mHasPDFgen;
     private boolean mIsOnLocalStorage;
-    private File mSongFile;
+    private File mSongFileSken;
+    private File mSongFileComp;
 
     public Song(Context context, int id, String title, String artist, int dateAdded, String language, int hasPDFgen) {
         this.mId = id;
@@ -42,11 +43,9 @@ public class Song implements Parcelable {
         else
             this.mHasPDFgen = true;
 
-        this.mSongFile = new File(context.getFilesDir().getAbsolutePath() + File.separatorChar + getFileName());
-        if (mSongFile.isFile()) {
-            mIsOnLocalStorage = true;
-        } else
-            mIsOnLocalStorage = false;
+        this.mSongFileSken = new File(context.getFilesDir().getAbsolutePath() + File.separatorChar + getFileName(true));
+        this.mSongFileComp = new File(context.getFilesDir().getAbsolutePath() + File.separatorChar + getFileName(false));
+        mIsOnLocalStorage = (mSongFileComp.isFile() || mSongFileSken.isFile());
     }
 
     private Song(Parcel in) {
@@ -57,7 +56,12 @@ public class Song implements Parcelable {
         this.mLanguage = LanguageManager.LanguageEnum.valueOf(in.readString());
         this.mHasPDFgen = (boolean) in.readValue(null);
         this.mIsOnLocalStorage = (boolean) in.readValue(null);
-        this.mSongFile = new File(in.readString());
+        this.mSongFileSken = new File(in.readString());
+        this.mSongFileComp = new File(in.readString());
+    }
+
+    public File getmSongFileComp() {
+        return mSongFileComp;
     }
 
     public int getmId() {
@@ -88,22 +92,25 @@ public class Song implements Parcelable {
         return mDateAdded;
     }
 
-    public File getmSongFile() {
-        return mSongFile;
+    public File getmSongFileSken() {
+        return mSongFileSken;
     }
 
     //vygenerování názvu PDF souboru
-    public String getFileName() {
-        String fileName = this.mArtist + "_" + this.mTitle;
-        fileName = Helper.makeTextNiceAgain(fileName);
-        fileName = fileName.replace(" ", "_").replace(",", "");
+    public String getFileName(boolean highQuality) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(this.mArtist);
+        stringBuilder.append("_");
+        stringBuilder.append(this.mTitle);
         if (mHasPDFgen) {
-            fileName += "-gen";
+            stringBuilder.append("-gen");
+        } else if (highQuality) {
+            stringBuilder.append("-sken");
         } else {
-            fileName += "-sken";
+            stringBuilder.append("-comp");
         }
-        fileName += ".pdf";
-        return fileName;
+        stringBuilder.append(".pdf");
+        return Helper.makeTextNiceAgain(stringBuilder.toString().replace(" ", "_").replace(",", ""));
     }
 
     //Vygenerované metody pro porovnávání objektů při řazení
@@ -135,6 +142,7 @@ public class Song implements Parcelable {
         dest.writeString(this.mLanguage.toString());
         dest.writeValue(this.mHasPDFgen);
         dest.writeValue(this.mIsOnLocalStorage);
-        dest.writeString(mSongFile.getAbsolutePath());
+        dest.writeString(mSongFileSken.getAbsolutePath());
+        dest.writeString(mSongFileComp.getAbsolutePath());
     }
 }

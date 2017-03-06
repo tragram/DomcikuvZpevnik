@@ -3,6 +3,7 @@ package org.elitanaroda.domcikuvzpevnik;
 import android.app.IntentService;
 import android.content.Intent;
 import android.content.Context;
+import android.net.ConnectivityManager;
 import android.os.PowerManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -16,7 +17,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 public class OneSongDownloadIS extends IntentService {
-    private static final String TAG = "SongDownloadService";
+    private static final String TAG = "OneSongDownloadService";
     private static final String PREFIX = "org.elitanaroda.domkvzpvnk.downloadsongintentservice";
     public static final String BROADCAST_DOWNLOAD_FINISHED = PREFIX + ".FINISHED";
     public static final String BROADCAST_SHOW_ERROR = PREFIX + ".SHOW";
@@ -32,7 +33,12 @@ public class OneSongDownloadIS extends IntentService {
     }
 
     public static String DownloadSong(Context context, Song song) {
-        return Download(context, PDF_DIR + song.getFileName(), song.getmSongFile());
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
+        if (cm.isActiveNetworkMetered()) {
+            return Download(context, PDF_DIR + song.getFileName(false), song.getmSongFileComp());
+        } else {
+            return Download(context, PDF_DIR + song.getFileName(true), song.getmSongFileSken());
+        }
     }
 
     public static String Download(Context context, String urlToDownload, File downloadToFile) {
@@ -74,6 +80,7 @@ public class OneSongDownloadIS extends IntentService {
             }
             Log.v(TAG, downloadToFile.getAbsolutePath() + " - sucessful download!");
         } catch (Exception e) {
+            e.printStackTrace();
             return e.toString();
         } finally {
             try {
@@ -82,7 +89,7 @@ public class OneSongDownloadIS extends IntentService {
                 if (input != null)
                     input.close();
             } catch (IOException ignored) {
-                Log.e(TAG, ignored.getMessage());
+                ignored.printStackTrace();
             }
 
             if (connection != null)
@@ -100,7 +107,6 @@ public class OneSongDownloadIS extends IntentService {
 
         result = null;
 
-        //Pokud tam je jen jedna písnička
         if (intent.hasExtra(PDFActivity.SONG_KEY)) {
             this.mSong = intent.getParcelableExtra(PDFActivity.SONG_KEY);
             result = DownloadSong(this, mSong);
