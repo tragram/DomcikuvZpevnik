@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Parcelable;
 import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
@@ -46,7 +45,7 @@ public class MoreSongsDownloadIS extends IntentService {
         if (cm.isActiveNetworkMetered()) {
             return Download(context, PDF_DIR + song.getFileName(false), song.getmSongFileComp());
         } else {
-            return Download(context, PDF_DIR + song.getFileName(true), song.getmSongFileSken());
+            return Download(context, PDF_DIR + song.getFileName(true), song.getmSongFileSkenOrGen());
         }
     }
 

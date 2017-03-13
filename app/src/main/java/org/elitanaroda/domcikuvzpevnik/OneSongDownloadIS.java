@@ -37,7 +37,7 @@ public class OneSongDownloadIS extends IntentService {
         if (cm.isActiveNetworkMetered()) {
             return Download(context, PDF_DIR + song.getFileName(false), song.getmSongFileComp());
         } else {
-            return Download(context, PDF_DIR + song.getFileName(true), song.getmSongFileSken());
+            return Download(context, PDF_DIR + song.getFileName(true), song.getmSongFileSkenOrGen());
         }
     }
 

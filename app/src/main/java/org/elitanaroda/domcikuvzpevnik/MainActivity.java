@@ -19,7 +19,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-
 import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -40,7 +39,7 @@ chci zas v tobě spát je pochybný
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener, FilterSongList.onFilterDone, SettingsFragment.OnDeleteSongs {
     private static String TAG = "Main";
     private DBHelper mDBHelper;
-    private RecyclerView songListView;
+    private RecyclerView songListRView;
     private Toolbar mToolbar;
     private SongsAdapter mAdapter;
     private List<Song> mSongList;
@@ -109,7 +108,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         }
     };
 
-    public static Toolbar domczeekizeToolbar(Context context, Toolbar toolbar) {
+    public static Toolbar setToolbarText(Context context, Toolbar toolbar) {
         toolbar.setTitle("Domčíkův");
         toolbar.setSubtitle("      Zpěvník");
         toolbar.setTitleTextAppearance(context, R.style.ActionBarTitle);
@@ -128,10 +127,10 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         mContext = getApplicationContext();
 
         mToolbar = (Toolbar) findViewById(R.id.mToolbar);
-        domczeekizeToolbar(this, mToolbar);
+        setToolbarText(this, mToolbar);
         setSupportActionBar(mToolbar);
 
-        songListView = createRecyclerView(this);
+        songListRView = createRecyclerView(this);
         mSongList = getSongsFromDB();
 
         mComparatorManager = new ComparatorManager(this);
@@ -151,7 +150,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         recyclerView.setHasFixedSize(true);
         recyclerView.addItemDecoration(new SimpleDividerItemDecoration(context));
         //SnapHelper snapHelper = new LinearSnapHelper();
-        //snapHelper.attachToRecyclerView(songListView);
+        //snapHelper.attachToRecyclerView(songListRView);
         return recyclerView;
     }
 
@@ -170,16 +169,9 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        /*RecyclerView.Adapter mAdapter = songListView.getAdapter();
-        mAdapter.notifyItemRangeChanged(0, mAdapter.getItemCount());*/
-    }
-
-
-    @Override
     protected void onStop() {
         super.onStop();
+        mAdapter.notifyDataSetChanged();
         mComparatorManager.saveComparator(mCurrentComparator);
         mLanguageManager.saveLanguages(mCurrentLanguageSettings);
     }
@@ -208,7 +200,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private void LoadSongsList(List<Song> songs, Comparator<Song> songComparator) {
         mAdapter = new SongsAdapter(this, songComparator);
         mAdapter.add(songs);
-        songListView.setAdapter(mAdapter);
+        songListRView.setAdapter(mAdapter);
         //Čekání na výběr písně uživatelem
         mAdapter.setOnItemClickListener(new SongsAdapter.OnItemClickListener() {
             @Override

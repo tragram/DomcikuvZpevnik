@@ -21,8 +21,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".PDFActivity"
-            android:screenOrientation="sensor"/>
+            android:name=".PDFActivity"/>
 
         <service
             android:name=".OneSongDownloadIS"

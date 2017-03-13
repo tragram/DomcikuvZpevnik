@@ -29,8 +29,9 @@ public class Song implements Parcelable {
     private LanguageManager.LanguageEnum mLanguage;
     private boolean mHasPDFgen;
     private boolean mIsOnLocalStorage;
-    private File mSongFileSken;
+    private File mSongFileSkenOrGen;
     private File mSongFileComp;
+    private File mSongFileGen;
 
     public Song(Context context, int id, String title, String artist, int dateAdded, String language, int hasPDFgen) {
         this.mId = id;
@@ -43,9 +44,11 @@ public class Song implements Parcelable {
         else
             this.mHasPDFgen = true;
 
-        this.mSongFileSken = new File(context.getFilesDir().getAbsolutePath() + File.separatorChar + getFileName(true));
+        this.mSongFileSkenOrGen = new File(context.getFilesDir().getAbsolutePath() + File.separatorChar + getFileName(true));
         this.mSongFileComp = new File(context.getFilesDir().getAbsolutePath() + File.separatorChar + getFileName(false));
-        mIsOnLocalStorage = (mSongFileComp.isFile() || mSongFileSken.isFile());
+        if (mSongFileSkenOrGen.isFile() && mSongFileComp.isFile())
+            mSongFileComp.delete();
+        mIsOnLocalStorage = (mSongFileComp.isFile() || mSongFileSkenOrGen.isFile());
     }
 
     private Song(Parcel in) {
@@ -56,7 +59,7 @@ public class Song implements Parcelable {
         this.mLanguage = LanguageManager.LanguageEnum.valueOf(in.readString());
         this.mHasPDFgen = (boolean) in.readValue(null);
         this.mIsOnLocalStorage = (boolean) in.readValue(null);
-        this.mSongFileSken = new File(in.readString());
+        this.mSongFileSkenOrGen = new File(in.readString());
         this.mSongFileComp = new File(in.readString());
     }
 
@@ -92,8 +95,8 @@ public class Song implements Parcelable {
         return mDateAdded;
     }
 
-    public File getmSongFileSken() {
-        return mSongFileSken;
+    public File getmSongFileSkenOrGen() {
+        return mSongFileSkenOrGen;
     }
 
     //vygenerování názvu PDF souboru
@@ -142,7 +145,7 @@ public class Song implements Parcelable {
         dest.writeString(this.mLanguage.toString());
         dest.writeValue(this.mHasPDFgen);
         dest.writeValue(this.mIsOnLocalStorage);
-        dest.writeString(mSongFileSken.getAbsolutePath());
+        dest.writeString(mSongFileSkenOrGen.getAbsolutePath());
         dest.writeString(mSongFileComp.getAbsolutePath());
     }
 }

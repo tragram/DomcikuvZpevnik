@@ -66,7 +66,7 @@ public class PDFActivity extends AppCompatActivity {
             mSong.setmIsOnLocalStorage(true);
             Song song = intent.getParcelableExtra(SONG_KEY);
             //song.setmIsOnLocalStorage(true);
-            openBestQualityAvailable(song);
+            showSong(song);
             Snackbar snackbar = Snackbar
                     .make(findViewById(android.R.id.content),
                             "File downloaded!", Snackbar.LENGTH_SHORT);
@@ -116,7 +116,7 @@ public class PDFActivity extends AppCompatActivity {
         pdfView = (PDFView) findViewById(R.id.pdfView);
 
         Toolbar mToolbar = (Toolbar) findViewById(R.id.mToolbar);
-        MainActivity.domczeekizeToolbar(this, mToolbar);
+        MainActivity.setToolbarText(this, mToolbar);
         setSupportActionBar(mToolbar);
 
         Intent intent = getIntent();
@@ -128,11 +128,13 @@ public class PDFActivity extends AppCompatActivity {
     }
 
     private void showSong(Song songToOpen) {
-        //Pokud už máme soubor, není nutné ho znovu stahovat
-        //TODO:Check for SD CARD
-        if (songToOpen.ismIsOnLocalStorage()) {
-            openBestQualityAvailable(songToOpen);
-        } else if (hasInternetConnection(this)) {
+        ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(CONNECTIVITY_SERVICE);
+        //Pokud už máme soubor v nejvyšší kvalitě, není nutné ho znovu stahovat
+        if (songToOpen.getmSongFileSkenOrGen().isFile()) {
+            displayFromFile(songToOpen.getmSongFileSkenOrGen());
+        } else if (cm.isActiveNetworkMetered() && songToOpen.getmSongFileComp().isFile()) {
+            displayFromFile(songToOpen.getmSongFileComp());
+        } else if (hasInternetConnection(mContext)) {
             downloadSong(songToOpen);
         } else {
             Snackbar snackbar = Snackbar
@@ -140,15 +142,6 @@ public class PDFActivity extends AppCompatActivity {
                             "File not available on local storage, sorry.", Snackbar.LENGTH_LONG);
             snackbar.show();
         }
-    }
-
-    private void openBestQualityAvailable(Song songToOpen) {
-        //If it's on local storage, open high quality if available, else open low quality
-        if (songToOpen.getmSongFileSken().isFile())
-            displayFromFile(songToOpen.getmSongFileSken());
-        else
-            displayFromFile(songToOpen.getmSongFileComp());
-        Log.i(TAG, "File Exists");
     }
 
     private void downloadSong(Song song) {
@@ -218,6 +211,13 @@ public class PDFActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.action_settings:
+                SettingsFragment settingsFragment = new SettingsFragment();
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.frame, settingsFragment)
+                        .addToBackStack("SettingsFragment")
+                        .commit();
+                return true;
             case R.id.youtube:
                 new SearchAndOpenYT(this).openYoutubeVideo(mSong);
                 break;
@@ -299,7 +299,7 @@ public class PDFActivity extends AppCompatActivity {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         if (!sharedPref.getBoolean("keepFiles", true)) {
             try {
-                deleteFile(mSong.getmSongFileSken().getName());
+                deleteFile(mSong.getmSongFileSkenOrGen().getName());
             } catch (Exception e) {
                 Log.e(TAG, e.getMessage());
             }
