@@ -28,6 +28,9 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * @author Dominik Hodan
+ */
 /*
 Global TODO:
 NFC send song
@@ -48,6 +51,10 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private SearchView mSearchView;
     private FilterSongList mFilterSongList;
     private SongComparator<Song> mCurrentComparator;
+
+    /**
+     * Reacts to user changing the sort settings
+     */
     PopupMenu.OnMenuItemClickListener onSortMenuClickListener = new PopupMenu.OnMenuItemClickListener() {
         @Override
         public boolean onMenuItemClick(MenuItem item) {
@@ -75,6 +82,10 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private LanguageManager mLanguageManager;
     private PopupMenu sortPopupMenu;
     private PopupMenu languagePopupMenu;
+
+    /**
+     * Reacts to user changing the language settings
+     */
     PopupMenu.OnMenuItemClickListener onLanguageMenuClickListener = new PopupMenu.OnMenuItemClickListener() {
         @Override
         public boolean onMenuItemClick(MenuItem item) {
@@ -108,6 +119,13 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         }
     };
 
+    /**
+     * Sets the title "Domcikuv Zpevnik" with the correct formatting to the provided toolbar
+     *
+     * @param context
+     * @param toolbar The toolbar you want to apply the header to
+     * @return Returns the customized toolbar.
+     */
     public static Toolbar setToolbarText(Context context, Toolbar toolbar) {
         toolbar.setTitle("Domčíkův");
         toolbar.setSubtitle("      Zpěvník");
@@ -123,6 +141,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //Set the UI
         setContentView(R.layout.activity_main);
         mContext = getApplicationContext();
 
@@ -130,6 +150,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         setToolbarText(this, mToolbar);
         setSupportActionBar(mToolbar);
 
+        //Load the song list
         songListRView = createRecyclerView(this);
         mSongList = getSongsFromDB();
 
@@ -157,8 +178,12 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     @Override
     protected void onStart() {
         super.onStart();
+
+        //Load settings
         mCurrentComparator = mComparatorManager.getComparatorPreferences();
         mCurrentLanguageSettings = mLanguageManager.getLanguagePreferences();
+
+        //Possibly update the DB
         if (PDFActivity.hasInternetConnection(this)) {
             new UpdateDB().execute();
         } else {
@@ -171,13 +196,20 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     @Override
     protected void onStop() {
         super.onStop();
+
+        //Reloads the list so that when the user returns, the checkmark is shown on a newly downloaded song
         mAdapter.notifyDataSetChanged();
+
+        //Save settings
         mComparatorManager.saveComparator(mCurrentComparator);
         mLanguageManager.saveLanguages(mCurrentLanguageSettings);
     }
 
+    /**
+     * Loads the DB from local storage
+     * @return List of songs saved in the DB
+     */
     private List<Song> getSongsFromDB() {
-        //Nacteni databaze a jeji ulozeni do arraylistu
         mDBHelper = new DBHelper(this);
         try {
             return mDBHelper.getAllSongs();
@@ -197,6 +229,11 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         mFilterSongList.filter(mSongList, mCurrentLanguageSettings);
     }
 
+    /**
+     * Creates an adapter, sets it to the recycler view, waits for item selection.
+     * @param songs The list of songs to be shown to the user.
+     * @param songComparator How to sort the list in the View.
+     */
     private void LoadSongsList(List<Song> songs, Comparator<Song> songComparator) {
         mAdapter = new SongsAdapter(this, songComparator);
         mAdapter.add(songs);
@@ -268,6 +305,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_settings:
+                //Show the settings fragment
                 SettingsFragment settingsFragment = new SettingsFragment();
                 settingsFragment.setOnDeleteSongsListener(this);
                 getFragmentManager().beginTransaction()
@@ -291,6 +329,9 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         }
     }
 
+    /**
+     * Checks if there are languages to go through, if user selected not ignoring language choice and then opens a random song.
+     */
     private void openRandomSong() {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         boolean ignore = sharedPref.getBoolean("randomIgnoresLanguage", false);
@@ -299,11 +340,18 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                     "How about choosing some languages? ;)", Snackbar.LENGTH_LONG);
             snackbar.show();
         } else {
-            actuallyOpenRandomSong(ignore);
+            safeOpenRandomSong(ignore);
         }
     }
 
-    private void actuallyOpenRandomSong(boolean ignore) {
+    /**
+     * Opens a random song, shouldn't be called directly!
+     * <p>
+     * To be used with {@link #openRandomSong()}.
+     *
+     * @param ignore Whether ignore or not the language settings.
+     */
+    private void safeOpenRandomSong(boolean ignore) {
         Song randomSong;
         boolean hasInternetConnection = PDFActivity.hasInternetConnection(this);
 
@@ -324,6 +372,10 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         }
     }
 
+    /**
+     * Checks all items provided, unless all are checked.
+     * @param items Items to (un)check.
+     */
     private void un_selectAll(MenuItem... items) {
         boolean anyUnchecked = false;
         for (MenuItem item : items) {
@@ -341,6 +393,11 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     }
 
 
+    /**
+     * Changes the language filter settings and reloads the list.
+     * @param item MenuItem to (un)check.
+     * @param languageEnum New language filter settings.
+     */
     private void changeLanguage(MenuItem item, LanguageManager.LanguageEnum languageEnum) {
         if (item.isChecked()) {
             item.setChecked(false);
@@ -364,17 +421,25 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     }
 
     //Spuštění aktivity se souborem
+
+    /**
+     * Opens a new PDFActivity showing the selected document.
+     * @param song Song to open.
+     */
     public void openPDFDocument(Song song) {
+        //Setting the expected file availability after finishing the PDFActivity
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        song.setmIsOnLocalStorage(sharedPref.getBoolean("keepFiles", true));
+
         Intent intent = new Intent(this, PDFActivity.class);
         intent.putExtra(PDFActivity.SONG_KEY, song);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
-
-        //Bez tohohle by to při dalším otevření nic neotevřelo, pokud se to smazalo
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        song.setmIsOnLocalStorage(sharedPref.getBoolean("keepFiles", true));
     }
 
+    /**
+     *  Updates the database, shows a popup on update or fail to check
+     */
     private class UpdateDB extends AsyncTask<Void, Void, String> {
         public static final String DB_URL = "http://elitanaroda.org/zpevnik/FinalDB.db";
         public File dbDir = new File(getFilesDir() + File.separator + "db");
@@ -390,9 +455,11 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                 URL url = new URL(DB_URL);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 Long serverDBLastModified = connection.getLastModified();
-                Log.i(TAG, connection.getHeaderFields().toString());
-                Log.i(TAG, "Server:" + serverDBLastModified.toString() + "\n Local:" + localDB.lastModified());
+                Log.v(TAG, connection.getHeaderFields().toString());
+                Log.v(TAG, "Server:" + serverDBLastModified.toString() + "\n Local:" + localDB.lastModified());
                 connection.disconnect();
+
+                //Only download if the db has been updated
                 if (localDB.lastModified() < serverDBLastModified) {
                     if (OneSongDownloadIS.Download(getBaseContext(), DB_URL, localDB) == null)
                         return "Database updated";
@@ -408,6 +475,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         @Override
         protected void onPostExecute(String message) {
             super.onPostExecute(message);
+            //On update reload the list
             if (message == "Database updated") {
                 mSongList = getSongsFromDB();
                 mFilterSongList.filter(mSongList, mCurrentLanguageSettings);

@@ -42,7 +42,7 @@ public class PDFActivity extends AppCompatActivity {
     private PDFView pdfView;
     private boolean doScroll = false;
     private Handler mScrollHandler;
-    //Doostření nových částí dokumentu
+    //Focusing newly shown parts of the document
     private final Runnable RefreshPageRunnable = new Runnable() {
         @Override
         public void run() {
@@ -51,7 +51,7 @@ public class PDFActivity extends AppCompatActivity {
         }
     };
     private float mScrollSpeed = 0.8f;
-    //Posun obrazu
+    //Moving the document
     private final Runnable ScrollRunnable = new Runnable() {
         @Override
         public void run() {
@@ -60,6 +60,7 @@ public class PDFActivity extends AppCompatActivity {
         }
     };
 
+    //On download finished informs the user and shows the document
     private BroadcastReceiver onFinishedReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -74,6 +75,7 @@ public class PDFActivity extends AppCompatActivity {
         }
     };
 
+    //On download error dismisses the download dialog and informs the user
     private BroadcastReceiver onErrorReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -96,7 +98,12 @@ public class PDFActivity extends AppCompatActivity {
         }
     };
 
-    //Checks if there's internet connection, returns true when there is
+    /**
+     * Checks if there's internet connection
+     *
+     * @param context
+     * @return Returns true on internet connection available
+     */
     public static boolean hasInternetConnection(Context context) {
         ConnectivityManager cm =
                 (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -109,9 +116,8 @@ public class PDFActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         this.mContext = getApplicationContext();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
 
-        //Inicializace UI
+        //Initialize the UI
         setContentView(R.layout.activity_pdfview);
         pdfView = (PDFView) findViewById(R.id.pdfView);
 
@@ -119,14 +125,18 @@ public class PDFActivity extends AppCompatActivity {
         MainActivity.setToolbarText(this, mToolbar);
         setSupportActionBar(mToolbar);
 
-        Intent intent = getIntent();
-        mSong = intent.getParcelableExtra(SONG_KEY);
-
         mScrollHandler = new Handler();
 
+        //Show th song
+        Intent intent = getIntent();
+        mSong = intent.getParcelableExtra(SONG_KEY);
         showSong(mSong);
     }
 
+    /**
+     * Shows the best quality available.
+     * @param songToOpen Which song to open.
+     */
     private void showSong(Song songToOpen) {
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(CONNECTIVITY_SERVICE);
         //Pokud už máme soubor v nejvyšší kvalitě, není nutné ho znovu stahovat
@@ -160,19 +170,19 @@ public class PDFActivity extends AppCompatActivity {
     }
 
 
-    //Obnovit scrollování a refresh
     @Override
     public void onResume() {
         super.onResume();
+        //Resume scrolling and refreshing
         if (doScroll) {
             startScrolling();
         }
     }
 
-    //nechceme dál scrollovat a refreshovat
     @Override
     public void onPause() {
         super.onPause();
+        //Pause scrolling and refreshing
         if (doScroll)
             mScrollHandler.removeCallbacksAndMessages(null);
     }
@@ -222,6 +232,7 @@ public class PDFActivity extends AppCompatActivity {
                 new SearchAndOpenYT(this).openYoutubeVideo(mSong);
                 break;
             case R.id.startStop:
+                //Switch between srolling and not scrolling
                 if (doScroll) {
                     stopScrolling();
                     item.setIcon(ContextCompat.getDrawable(mContext, R.drawable.ic_play_arrow_white_24dp));
@@ -247,7 +258,9 @@ public class PDFActivity extends AppCompatActivity {
         return true;
     }
 
-    //adds runnables to the queque
+    /**
+     * Adds runnables to the queque
+     */
     private void startScrolling() {
         doScroll = true;
         mScrollHandler = new Handler();
@@ -255,7 +268,9 @@ public class PDFActivity extends AppCompatActivity {
         mScrollHandler.postDelayed(RefreshPageRunnable, 500);
     }
 
-    //removes all callbacks from the queque
+    /**
+     * Removes all callbacks from the queque
+     */
     private void stopScrolling() {
         doScroll = false;
         try {
@@ -271,11 +286,15 @@ public class PDFActivity extends AppCompatActivity {
         this.startService(serviceIntent);
     }
 
-    //Načtení konkrétního souboru
-    private void displayFromFile(File file) {
-        Log.i(TAG, file.getAbsolutePath());
-        if (file.exists()) {
-            pdfView.fromFile(file)
+    /**
+     * Actually load the song
+     *
+     * @param fileToOpen The file where the song is saved
+     */
+    private void displayFromFile(File fileToOpen) {
+        Log.i(TAG, fileToOpen.getAbsolutePath());
+        if (fileToOpen.exists()) {
+            pdfView.fromFile(fileToOpen)
                     .defaultPage(0)
                     .enableAnnotationRendering(true)
                     .scrollHandle(new DefaultScrollHandle(this))
@@ -294,8 +313,8 @@ public class PDFActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        //TODO: při vypnutí se nesmaže, jen při zpět
-        //pokud je zvolena možnost mazat, tak smazat
+        //TODO: Wont be deleted on force closing the app, only on back-press
+        //Delete if user doesn't wish to keep the file
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         if (!sharedPref.getBoolean("keepFiles", true)) {
             try {

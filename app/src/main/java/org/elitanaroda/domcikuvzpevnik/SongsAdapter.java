@@ -18,12 +18,14 @@ import java.util.List;
  * Created by Dominik on 06.12.2016.
  */
 
+/**
+ * Adapter used with the MainActivity RecyclerView
+ */
 
 public class SongsAdapter extends
         RecyclerView.Adapter<SongsAdapter.ViewHolder> {
     private final String TAG = "SongsAdapter";
     private final Comparator<Song> mComparator;
-    //TODO: Improve these methods
     private final SortedList.Callback<Song> mCallback = new SortedList.Callback<Song>() {
         @Override
         public boolean areContentsTheSame(Song oldItem, Song newItem) {
@@ -70,7 +72,7 @@ public class SongsAdapter extends
         mSongs = new SortedList<>(Song.class, mCallback);
     }
 
-    // Define the method that allows the parent activity or fragment to define the listener
+    //Define the method that allows the parent activity or fragment to define the listener
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
     }
@@ -85,7 +87,7 @@ public class SongsAdapter extends
         return viewHolder;
     }
 
-    //Inicializace jednotlivých řádků
+    //Inicialization of each "line" within the RView
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         Song song = mSongs.get(position);
@@ -109,10 +111,21 @@ public class SongsAdapter extends
     }
 
     //Zaplnění seznamu, přidá jen neexistující
+
+    /**
+     * Add to the list all the songs not included yet
+     * Doesn't create duplicates
+     *
+     * @param songs Songs to be included
+     */
     public void add(List<Song> songs) {
         mSongs.addAll(songs);
     }
 
+    /**
+     * Removes provided songs from the list
+     * @param songs Songs to be removed
+     */
     public void remove(List<Song> songs) {
         mSongs.beginBatchedUpdates();
         for (Song song : songs) {
@@ -121,7 +134,10 @@ public class SongsAdapter extends
         mSongs.endBatchedUpdates();
     }
 
-    //Odstraní již neexistující a přidá nové
+    /**
+     * Efficiently replace the old list with the new
+     * @param songs The new list of Songs to be shown
+     */
     public void replaceAll(List<Song> songs) {
         mSongs.beginBatchedUpdates();
         for (int i = mSongs.size() - 1; i >= 0; i--) {

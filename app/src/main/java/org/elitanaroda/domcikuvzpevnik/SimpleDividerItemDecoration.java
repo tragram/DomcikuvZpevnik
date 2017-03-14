@@ -9,9 +9,10 @@ import android.view.View;
 
 /**
  * Created by Dominik on 12/24/2016.
+ * Defining the divider lines in the RecyclerView in MainActivity
+ * Nothing worth watching
  */
 
-//Slouží k čárkám v RecycleView, v zásadě nic zajímavýho
 public class SimpleDividerItemDecoration extends RecyclerView.ItemDecoration {
     private Drawable mDivider;
 

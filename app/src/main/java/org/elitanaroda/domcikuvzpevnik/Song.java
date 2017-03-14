@@ -51,6 +51,11 @@ public class Song implements Parcelable {
         mIsOnLocalStorage = (mSongFileComp.isFile() || mSongFileSkenOrGen.isFile());
     }
 
+    /**
+     * Implementation of the Parceleable Interface, reconstructing the object
+     *
+     * @param in Parcel to reconstruct the object from
+     */
     private Song(Parcel in) {
         this.mId = in.readInt();
         this.mTitle = in.readString();
@@ -61,6 +66,30 @@ public class Song implements Parcelable {
         this.mIsOnLocalStorage = (boolean) in.readValue(null);
         this.mSongFileSkenOrGen = new File(in.readString());
         this.mSongFileComp = new File(in.readString());
+    }
+
+    /**
+     * Implementation of the Parceleable Interface - creating the parcel
+     *
+     * @param dest The parcel to write the data into
+     */
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(this.mId);
+        dest.writeString(this.mTitle);
+        dest.writeString(this.mArtist);
+        dest.writeInt(this.mDateAdded);
+        dest.writeString(this.mLanguage.toString());
+        dest.writeValue(this.mHasPDFgen);
+        dest.writeValue(this.mIsOnLocalStorage);
+        dest.writeString(mSongFileSkenOrGen.getAbsolutePath());
+        dest.writeString(mSongFileComp.getAbsolutePath());
+    }
+
+
+    @Override
+    public int describeContents() {
+        return 0;
     }
 
     public File getmSongFileComp() {
@@ -99,7 +128,11 @@ public class Song implements Parcelable {
         return mSongFileSkenOrGen;
     }
 
-    //vygenerování názvu PDF souboru
+    /**
+     * Generates the expected file name of its object
+     * @param highQuality Choose whether to generate the name of a high-quality PDF (generated where available)
+     * @return The file name
+     */
     public String getFileName(boolean highQuality) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(this.mArtist);
@@ -113,10 +146,10 @@ public class Song implements Parcelable {
             stringBuilder.append("-comp");
         }
         stringBuilder.append(".pdf");
-        return Helper.makeTextNiceAgain(stringBuilder.toString().replace(" ", "_").replace(",", ""));
+        return Utils.makeTextNiceAgain(stringBuilder.toString().replace(" ", "_").replace(",", ""));
     }
 
-    //Vygenerované metody pro porovnávání objektů při řazení
+    //Generated methods for comparing two songs
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -129,23 +162,5 @@ public class Song implements Parcelable {
         if (mHasPDFgen != song.mHasPDFgen) return false;
         if (mTitle != null ? !mTitle.equals(song.mTitle) : song.mTitle != null) return false;
         return mArtist != null ? mArtist.equals(song.mArtist) : song.mArtist == null;
-    }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeInt(this.mId);
-        dest.writeString(this.mTitle);
-        dest.writeString(this.mArtist);
-        dest.writeInt(this.mDateAdded);
-        dest.writeString(this.mLanguage.toString());
-        dest.writeValue(this.mHasPDFgen);
-        dest.writeValue(this.mIsOnLocalStorage);
-        dest.writeString(mSongFileSkenOrGen.getAbsolutePath());
-        dest.writeString(mSongFileComp.getAbsolutePath());
     }
 }

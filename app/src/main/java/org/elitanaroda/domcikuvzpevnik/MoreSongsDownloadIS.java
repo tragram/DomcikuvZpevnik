@@ -24,6 +24,9 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+/**
+ * Class used for download the song within the intent
+ */
 public class MoreSongsDownloadIS extends IntentService {
     private static final String TAG = "MoreSongsDownloadService";
     private static final String PREFIX = "org.elitanaroda.domkvzpvnk.downloadsongintentservice";
@@ -40,6 +43,13 @@ public class MoreSongsDownloadIS extends IntentService {
         super("MoreSongsDownloadIS");
     }
 
+    /**
+     * Decide which file to download and do it
+     *
+     * @param context App context
+     * @param song    Song to download
+     * @return Null on successful download
+     */
     public static String DownloadSong(Context context, Song song) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
         if (cm.isActiveNetworkMetered()) {
@@ -49,6 +59,13 @@ public class MoreSongsDownloadIS extends IntentService {
         }
     }
 
+    /**
+     * A very general method for downloading any file
+     * @param context App context
+     * @param urlToDownload URL where the file is
+     * @param downloadToFile Where the file should be saved
+     * @return Null on successful download
+     */
     public static String Download(Context context, String urlToDownload, File downloadToFile) {
         InputStream input = null;
         OutputStream output = null;
@@ -112,6 +129,7 @@ public class MoreSongsDownloadIS extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        //We don't want the OS to go to sleep
         PowerManager pm = (PowerManager) this.getSystemService(Context.POWER_SERVICE);
         mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                 getClass().getName());
@@ -128,9 +146,14 @@ public class MoreSongsDownloadIS extends IntentService {
         mWakeLock.release();
     }
 
+    /**
+     * Converts the parcelables provided into Song objects and downloads them
+     * @param parcelables
+     */
     private void downloadArray(Parcelable[] parcelables) {
         int progress = 0;
         int total = parcelables.length;
+        //Create the notification
         mBuilder = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.mipmap.ic_launcher_true)
                 .setContentTitle("Downloading your files")
@@ -144,7 +167,7 @@ public class MoreSongsDownloadIS extends IntentService {
                     setNotificationToAborted();
                     break;
                 }
-                //TODO: i když jsou, tak si to nezmění, pokud se nerestartuje aplikace
+                //Only download if the file isn't already downloaded
                 if (!((Song) song).ismIsOnLocalStorage()) {
                     result = DownloadSong(this, (Song) song);
                     if (result != null)
@@ -160,6 +183,10 @@ public class MoreSongsDownloadIS extends IntentService {
         }
     }
 
+    /**
+     * Causes the notification to be clickable, when it's clicked, goes to the MainActivity
+     * @param builder The builder connected to the notification
+     */
     private void setNotificationClickable(NotificationCompat.Builder builder) {
         Intent showActivityIntent = new Intent(this, MainActivity.class);
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
@@ -176,6 +203,9 @@ public class MoreSongsDownloadIS extends IntentService {
         mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
     }
 
+    /**
+     * Shows the text "Download complete" in the notification and hides the progess bar
+     */
     private void updateNotificationDone() {
         mBuilder.setContentText("Download complete")
                 // Removes the progress bar
@@ -183,6 +213,9 @@ public class MoreSongsDownloadIS extends IntentService {
         mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
     }
 
+    /**
+     * Shows the text "Action aborted" in the notification
+     */
     private void setNotificationToAborted() {
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getApplicationContext())
                 .setSmallIcon(R.mipmap.ic_launcher_true)

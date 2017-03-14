@@ -97,7 +97,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         if (key.equals("keepFiles")) {
             //if its unchecked, we need to stop downloading, delete the files and also grey out the other button
             if (!keepFiles.isChecked()) {
-                if (Helper.isMyServiceRunning(mContext, MoreSongsDownloadIS.class)) {
+                if (Utils.isMyServiceRunning(mContext, MoreSongsDownloadIS.class)) {
                     Intent localIntent = new Intent(MoreSongsDownloadIS.BROADCAST_STOP_BATCH_DOWNLOAD);
                     LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(localIntent);
                 }

@@ -11,6 +11,7 @@ import java.util.Set;
 
 /**
  * Created by Dominik on 2/3/2017.
+ * Class used for managing languages in use to sort the list and saving/loading the settings
  */
 
 public class LanguageManager {
@@ -19,6 +20,12 @@ public class LanguageManager {
 
     public LanguageManager(Context context) {this.mContext = context;}
 
+    /**
+     * Converts a string (e.g. from the DB) to an enum
+     *
+     * @param language The string to convert
+     * @return The corresponding enum. Note: On unknown string returns "OTHER"
+     */
     private static LanguageEnum toLanguageEnum(String language) {
         try {
             return LanguageEnum.valueOf(language);

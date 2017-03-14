@@ -17,6 +17,7 @@ import java.util.List;
 
 /**
  * Created by Dominik on 09.12.2016.
+ * Class used to read the DB
  */
 
 public class DBHelper extends SQLiteOpenHelper {
@@ -31,6 +32,11 @@ public class DBHelper extends SQLiteOpenHelper {
         this.mContext = context;
     }
 
+    /**
+     * Creates the directory if neccessary
+     *
+     * @return The db folder directory path
+     */
     private String getDBPath() {
         File dbDir = new File(mContext.getFilesDir() + File.separator + "db");
         if (!dbDir.isDirectory())
@@ -38,12 +44,20 @@ public class DBHelper extends SQLiteOpenHelper {
         return dbDir.toString();
     }
 
+    /**
+     *
+     * @throws SQLException Upon unsuccessful opening of the DB
+     */
     private void openDataBase() throws SQLException {
         String myPath = getDBPath() + File.separator + DB_NAME;
         mDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
-        Log.i(TAG, "Databaze " + myPath + " byla otevrena!");
+        Log.v(TAG, "Database " + myPath + " opened!");
     }
 
+    /**
+     * Queries the DB for data and creates the Song objects
+     * @return An array list of all the songs in the DB
+     */
     public List<Song> getAllSongs() {
         openDataBase();
         List<Song> arrayListSongs = new ArrayList<>();
@@ -89,7 +103,6 @@ public class DBHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
     }
-
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {

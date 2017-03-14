@@ -22,6 +22,7 @@ import java.util.List;
 
 /**
  * Created by Dominik on 2/2/2017.
+ * Class used for showing the first video on the query provided
  */
 
 public class SearchAndOpenYT {
@@ -35,8 +36,6 @@ public class SearchAndOpenYT {
     public void openYoutubeVideo(Song songToLookUp) {
         new openYoutube().execute(songToLookUp.getmArtist() + " - " + songToLookUp.getmTitle());
     }
-
-
     private class openYoutube extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... params) {

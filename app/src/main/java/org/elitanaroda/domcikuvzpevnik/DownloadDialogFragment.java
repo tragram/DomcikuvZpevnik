@@ -13,6 +13,9 @@ import android.view.ViewGroup;
 
 import com.daimajia.numberprogressbar.NumberProgressBar;
 
+/**
+ * Fragment used for displaing the download progress in PDFActivity
+ */
 public class DownloadDialogFragment extends DialogFragment {
     private static final String TAG = "DownloadDialogFragment";
     private NumberProgressBar numberProgressBar;

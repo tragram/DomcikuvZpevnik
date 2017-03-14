@@ -16,6 +16,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
+/**
+ * Class used for downloading an array of Songs contained within the intent
+ */
+
 public class OneSongDownloadIS extends IntentService {
     private static final String TAG = "OneSongDownloadService";
     private static final String PREFIX = "org.elitanaroda.domkvzpvnk.downloadsongintentservice";
@@ -32,6 +37,13 @@ public class OneSongDownloadIS extends IntentService {
         super("OneSongDownloadIS");
     }
 
+    /**
+     * Decide which file to download and do it
+     *
+     * @param context App context
+     * @param song    Song to download
+     * @return Null on successful download
+     */
     public static String DownloadSong(Context context, Song song) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
         if (cm.isActiveNetworkMetered()) {
@@ -41,6 +53,13 @@ public class OneSongDownloadIS extends IntentService {
         }
     }
 
+    /**
+     * A very general method for downloading any file, broadcasts progress update
+     * @param context App context
+     * @param urlToDownload URL where the file is
+     * @param downloadToFile Where the file should be saved
+     * @return Null on successful download
+     */
     public static String Download(Context context, String urlToDownload, File downloadToFile) {
         InputStream input = null;
         OutputStream output = null;
@@ -51,16 +70,16 @@ public class OneSongDownloadIS extends IntentService {
             connection = (HttpURLConnection) url.openConnection();
             connection.connect();
 
-            // ověření odpovědi 200, aby se neuložil error
+            //Checking for code 00, so that we don't accidentally save an error
             if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
                 return "Server returned HTTP " + connection.getResponseCode()
                         + " " + connection.getResponseMessage();
             }
 
-            //pro výpočet % stažených
+            //To be able to calculate % downloaded
             int fileLength = connection.getContentLength();
 
-            // download the file
+            //Download the file
             input = new BufferedInputStream(url.openStream(), 8192);
             output = new FileOutputStream(downloadToFile);
 
@@ -70,7 +89,7 @@ public class OneSongDownloadIS extends IntentService {
             while ((count = input.read(data)) != -1) {
                 total += count;
 
-                // publishing the progress only if total length is known
+                //Publishing the progress only if total length is known
                 if (fileLength > 0) {
                     Intent localIntent = new Intent(BROADCAST_PROGRESS_UPDATE);
                     localIntent.putExtra("progress", (int) (total * 100 / fileLength));
@@ -121,6 +140,10 @@ public class OneSongDownloadIS extends IntentService {
         mWakeLock.release();
     }
 
+    /**
+     * Sends an error broadcast
+     * @param result A message to be included within the intent
+     */
     private void sendErrorBroadcast(String result) {
         Intent localIntent = new Intent(BROADCAST_SHOW_ERROR);
         localIntent.putExtra(PDFActivity.MESSAGE_KEY, "Download error:\n" + result)
@@ -129,6 +152,9 @@ public class OneSongDownloadIS extends IntentService {
         Log.e(TAG, result);
     }
 
+    /**
+     * Sends a Finished broadcast
+     */
     private void sendFinishedBroadcast() {
         Intent localIntent = new Intent(BROADCAST_DOWNLOAD_FINISHED);
         localIntent.putExtra(PDFActivity.SONG_KEY, mSong)

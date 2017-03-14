@@ -9,10 +9,11 @@ import java.text.Normalizer;
 
 /**
  * Created by Dominik on 2/3/2017.
+ * Class used for managing comparators in use to sort the list and saving/loading the settings
  */
 
 public class ComparatorManager {
-    //Comparatory pro řazení písniček v seznamu
+    //Sorts the list alphabetically by title
     public static final SongComparator<Song> ALPHABETICAL_BY_TITLE = new SongComparator<Song>(0) {
         @Override
         public int compare(Song o1, Song o2) {
@@ -20,6 +21,7 @@ public class ComparatorManager {
                     compareTo(Normalizer.normalize(o2.getmTitle(), Normalizer.Form.NFD));
         }
     };
+    //Sorts the list alphabetically by artist
     public static final SongComparator<Song> ALPHABETICAL_BY_ARTIST = new SongComparator<Song>(1) {
         @Override
         public int compare(Song o1, Song o2) {
@@ -27,6 +29,9 @@ public class ComparatorManager {
                     compareTo(Normalizer.normalize(o2.getmArtist(), Normalizer.Form.NFD));
         }
     };
+
+    //Sorts the list by date, newest first
+    //On same date, sorts it alphabetically by title
     public static final SongComparator<Song> BY_DATE = new SongComparator<Song>(2) {
         @Override
         public int compare(Song o1, Song o2) {

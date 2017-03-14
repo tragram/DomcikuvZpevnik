@@ -7,6 +7,7 @@ import java.util.Objects;
 
 /**
  * Created by Dominik on 2/1/2017.
+ * A simple extension of the Comparator class, all its objects must have an ID, which is then used to save settings
  */
 
 public class SongComparator<Song> implements Comparator<Song> {
