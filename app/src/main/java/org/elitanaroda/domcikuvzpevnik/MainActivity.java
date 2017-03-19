@@ -427,6 +427,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
      * @param song Song to open.
      */
     public void openPDFDocument(Song song) {
+        /*
         //Setting the expected file availability after finishing the PDFActivity
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         song.setmIsOnLocalStorage(sharedPref.getBoolean("keepFiles", true));
@@ -434,6 +435,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         Intent intent = new Intent(this, PDFActivity.class);
         intent.putExtra(PDFActivity.SONG_KEY, song);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);*/
+        Intent intent = new Intent(this, ChordProActivity.class);
         startActivity(intent);
     }
 

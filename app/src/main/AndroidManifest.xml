@@ -20,8 +20,7 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity
-            android:name=".PDFActivity"/>
+        <activity android:name=".PDFActivity"/>
 
         <service
             android:name=".OneSongDownloadIS"
@@ -31,6 +30,12 @@
             android:name=".MoreSongsDownloadIS"
             android:exported="false">
         </service>
+
+        <activity
+            android:name=".ChordProActivity"
+            android:label="@string/title_activity_chord_pro"
+            android:theme="@style/MyMaterialTheme">
+        </activity>
     </application>
 
 </manifest>
