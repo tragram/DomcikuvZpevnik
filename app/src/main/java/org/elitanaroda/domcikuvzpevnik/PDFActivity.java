@@ -66,7 +66,6 @@ public class PDFActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             mSong.setmIsOnLocalStorage(true);
             Song song = intent.getParcelableExtra(SONG_KEY);
-            //song.setmIsOnLocalStorage(true);
             showSong(song);
             Snackbar snackbar = Snackbar
                     .make(findViewById(android.R.id.content),
@@ -127,7 +126,7 @@ public class PDFActivity extends AppCompatActivity {
 
         mScrollHandler = new Handler();
 
-        //Show th song
+        //Show the song
         Intent intent = getIntent();
         mSong = intent.getParcelableExtra(SONG_KEY);
         showSong(mSong);
@@ -139,11 +138,11 @@ public class PDFActivity extends AppCompatActivity {
      */
     private void showSong(Song songToOpen) {
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(CONNECTIVITY_SERVICE);
-        //Pokud už máme soubor v nejvyšší kvalitě, není nutné ho znovu stahovat
-        if (songToOpen.getmSongFileSkenOrGen().isFile()) {
-            displayFromFile(songToOpen.getmSongFileSkenOrGen());
-        } else if (cm.isActiveNetworkMetered() && songToOpen.getmSongFileComp().isFile()) {
-            displayFromFile(songToOpen.getmSongFileComp());
+        //If we already have the file in high quality, there is no need to download it again
+        if (songToOpen.getmSongFileOriginal().isFile()) {
+            displayFromFile(songToOpen.getmSongFileOriginal());
+        } else if (cm.isActiveNetworkMetered() && songToOpen.getmSongFileSmall().isFile()) {
+            displayFromFile(songToOpen.getmSongFileSmall());
         } else if (hasInternetConnection(mContext)) {
             downloadSong(songToOpen);
         } else {
@@ -318,7 +317,7 @@ public class PDFActivity extends AppCompatActivity {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         if (!sharedPref.getBoolean("keepFiles", true)) {
             try {
-                deleteFile(mSong.getmSongFileSkenOrGen().getName());
+                deleteFile(mSong.getmSongFileSmall().getName());
             } catch (Exception e) {
                 Log.e(TAG, e.getMessage());
             }

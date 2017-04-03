@@ -71,6 +71,7 @@ public class DBHelper extends SQLiteOpenHelper {
             int addedOnColumn = res.getColumnIndex("AddedOn");
             int languageColumn = res.getColumnIndex("Lang");
             int hasGenColumn = res.getColumnIndex("hasGen");
+            int hasChordProColumn = res.getColumnIndex("hasChordPro");
 
             while (!res.isAfterLast()) {
                 Song song = new Song(
@@ -80,7 +81,8 @@ public class DBHelper extends SQLiteOpenHelper {
                         res.getString(artistColumn),
                         res.getInt(addedOnColumn),
                         res.getString(languageColumn),
-                        res.getInt(hasGenColumn)
+                        res.getInt(hasGenColumn),
+                        res.getInt(hasChordProColumn)
                 );
 
                 arrayListSongs.add(song);

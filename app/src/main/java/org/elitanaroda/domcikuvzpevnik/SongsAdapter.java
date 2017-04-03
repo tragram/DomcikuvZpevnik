@@ -9,14 +9,8 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import java.io.File;
 import java.util.Comparator;
 import java.util.List;
-
-/**
- * Created by Dominik on 06.12.2016.
- */
 
 /**
  * Adapter used with the MainActivity RecyclerView

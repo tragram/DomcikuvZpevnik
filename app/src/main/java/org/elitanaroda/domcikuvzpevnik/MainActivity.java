@@ -3,6 +3,7 @@ package org.elitanaroda.domcikuvzpevnik;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -19,6 +20,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+
 import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -207,6 +209,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     /**
      * Loads the DB from local storage
+     *
      * @return List of songs saved in the DB
      */
     private List<Song> getSongsFromDB() {
@@ -231,7 +234,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     /**
      * Creates an adapter, sets it to the recycler view, waits for item selection.
-     * @param songs The list of songs to be shown to the user.
+     *
+     * @param songs          The list of songs to be shown to the user.
      * @param songComparator How to sort the list in the View.
      */
     private void LoadSongsList(List<Song> songs, Comparator<Song> songComparator) {
@@ -309,7 +313,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                 SettingsFragment settingsFragment = new SettingsFragment();
                 settingsFragment.setOnDeleteSongsListener(this);
                 getFragmentManager().beginTransaction()
-                        .replace(R.id.content, settingsFragment)
+                        .replace(R.id.chordProContent, settingsFragment)
                         .addToBackStack("SettingsFragment")
                         .commit();
                 return true;
@@ -355,16 +359,17 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         Song randomSong;
         boolean hasInternetConnection = PDFActivity.hasInternetConnection(this);
 
+        Random randomGenerator = new Random();
         if (!ignore) {
             do {
-                randomSong = mSongList.get(new Random().nextInt(mSongList.size()));
+                randomSong = mSongList.get(randomGenerator.nextInt(mSongList.size()));
             } while (!mCurrentLanguageSettings.contains(randomSong.getmLanguage()));
         } else
-            randomSong = mSongList.get(new Random().nextInt(mSongList.size()));
+            randomSong = mSongList.get(randomGenerator.nextInt(mSongList.size()));
 
-        if (hasInternetConnection || randomSong.ismIsOnLocalStorage())
+        if (hasInternetConnection || randomSong.ismIsOnLocalStorage()) {
             openPDFDocument(randomSong);
-        else {
+        } else {
             Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
                     "Random song not available on local storage and you are offline :(   Better luck next time!",
                     Snackbar.LENGTH_LONG);
@@ -374,6 +379,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     /**
      * Checks all items provided, unless all are checked.
+     *
      * @param items Items to (un)check.
      */
     private void un_selectAll(MenuItem... items) {
@@ -395,7 +401,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     /**
      * Changes the language filter settings and reloads the list.
-     * @param item MenuItem to (un)check.
+     *
+     * @param item         MenuItem to (un)check.
      * @param languageEnum New language filter settings.
      */
     private void changeLanguage(MenuItem item, LanguageManager.LanguageEnum languageEnum) {
@@ -420,28 +427,32 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         return true;
     }
 
-    //Spuštění aktivity se souborem
-
     /**
      * Opens a new PDFActivity showing the selected document.
+     *
      * @param song Song to open.
      */
     public void openPDFDocument(Song song) {
-        /*
-        //Setting the expected file availability after finishing the PDFActivity
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        song.setmIsOnLocalStorage(sharedPref.getBoolean("keepFiles", true));
+        //We won't be downloading this
+        if (song.hasChordPro() && PDFActivity.hasInternetConnection(this)) {
+            Intent intent = new Intent(this, ChordProActivity.class);
+            intent.putExtra(PDFActivity.SONG_KEY, song);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        } else {
+            //Setting the expected file availability after finishing the PDFActivity
+            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+            song.setmIsOnLocalStorage(sharedPref.getBoolean("keepFiles", true));
 
-        Intent intent = new Intent(this, PDFActivity.class);
-        intent.putExtra(PDFActivity.SONG_KEY, song);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);*/
-        Intent intent = new Intent(this, ChordProActivity.class);
-        startActivity(intent);
+            Intent intent = new Intent(this, PDFActivity.class);
+            intent.putExtra(PDFActivity.SONG_KEY, song);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }
     }
 
     /**
-     *  Updates the database, shows a popup on update or fail to check
+     * Updates the database, shows a popup on update or fail to check
      */
     private class UpdateDB extends AsyncTask<Void, Void, String> {
         public static final String DB_URL = "http://elitanaroda.org/zpevnik/FinalDB.db";

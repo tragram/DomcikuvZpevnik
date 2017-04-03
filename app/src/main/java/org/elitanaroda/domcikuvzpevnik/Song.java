@@ -7,7 +7,7 @@ import android.os.Parcelable;
 import java.io.File;
 
 /**
- * Created by Dominik on 10.12.2016.
+ * The class responsible for one record of a "song"
  */
 
 public class Song implements Parcelable {
@@ -28,31 +28,38 @@ public class Song implements Parcelable {
 
     private LanguageManager.LanguageEnum mLanguage;
     private boolean mHasPDFgen;
+    private boolean mHasChordPro;
     private boolean mIsOnLocalStorage;
-    private File mSongFileSkenOrGen;
-    private File mSongFileComp;
-    private File mSongFileGen;
+    private File mSongFileSmall;
+    private File mSongFileOriginal;
 
-    public Song(Context context, int id, String title, String artist, int dateAdded, String language, int hasPDFgen) {
+    public Song(Context context, int id, String title, String artist, int dateAdded, String language, int hasPDFgen, int hasChordPro) {
         this.mId = id;
         this.mTitle = title;
         this.mArtist = artist;
         this.mDateAdded = dateAdded;
         this.mLanguage = LanguageManager.LanguageEnum.valueOf(language);
-        if (hasPDFgen == 0)
+        if (hasPDFgen == 0) {
             this.mHasPDFgen = false;
-        else
+        } else {
             this.mHasPDFgen = true;
+        }
+        if (hasChordPro == 0) {
+            this.mHasChordPro = false;
+        } else {
+            this.mHasChordPro = true;
+        }
 
-        this.mSongFileSkenOrGen = new File(context.getFilesDir().getAbsolutePath() + File.separatorChar + getFileName(true));
-        this.mSongFileComp = new File(context.getFilesDir().getAbsolutePath() + File.separatorChar + getFileName(false));
-        if (mSongFileSkenOrGen.isFile() && mSongFileComp.isFile())
-            mSongFileComp.delete();
-        mIsOnLocalStorage = (mSongFileComp.isFile() || mSongFileSkenOrGen.isFile());
+        this.mSongFileSmall = new File(context.getFilesDir().getAbsolutePath() + File.separatorChar + getFileName(false));
+        this.mSongFileOriginal = new File(context.getFilesDir().getAbsolutePath() + File.separatorChar + getFileName(true));
+        if (mSongFileSmall.isFile() && mSongFileOriginal.isFile()) {
+            mSongFileOriginal.delete();
+        }
+        mIsOnLocalStorage = (mSongFileOriginal.isFile() || mSongFileSmall.isFile());
     }
 
     /**
-     * Implementation of the Parceleable Interface, reconstructing the object
+     * Implementation of the Parceleable Interface in order to be able to pass the object within an intent - reconstructing the object
      *
      * @param in Parcel to reconstruct the object from
      */
@@ -63,9 +70,10 @@ public class Song implements Parcelable {
         this.mDateAdded = in.readInt();
         this.mLanguage = LanguageManager.LanguageEnum.valueOf(in.readString());
         this.mHasPDFgen = (boolean) in.readValue(null);
+        this.mHasChordPro = (boolean) in.readValue(null);
         this.mIsOnLocalStorage = (boolean) in.readValue(null);
-        this.mSongFileSkenOrGen = new File(in.readString());
-        this.mSongFileComp = new File(in.readString());
+        this.mSongFileSmall = new File(in.readString());
+        this.mSongFileOriginal = new File(in.readString());
     }
 
     /**
@@ -81,9 +89,10 @@ public class Song implements Parcelable {
         dest.writeInt(this.mDateAdded);
         dest.writeString(this.mLanguage.toString());
         dest.writeValue(this.mHasPDFgen);
+        dest.writeValue(this.mHasChordPro);
         dest.writeValue(this.mIsOnLocalStorage);
-        dest.writeString(mSongFileSkenOrGen.getAbsolutePath());
-        dest.writeString(mSongFileComp.getAbsolutePath());
+        dest.writeString(mSongFileSmall.getAbsolutePath());
+        dest.writeString(mSongFileOriginal.getAbsolutePath());
     }
 
 
@@ -92,8 +101,8 @@ public class Song implements Parcelable {
         return 0;
     }
 
-    public File getmSongFileComp() {
-        return mSongFileComp;
+    public File getmSongFileOriginal() {
+        return mSongFileOriginal;
     }
 
     public int getmId() {
@@ -112,6 +121,20 @@ public class Song implements Parcelable {
         return mLanguage;
     }
 
+
+    public boolean hasChordPro() {
+        return mHasChordPro;
+    }
+
+    public String getChordProFileName() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(this.mArtist);
+        stringBuilder.append("_");
+        stringBuilder.append(this.mTitle);
+        stringBuilder.append("-chordpro.txt");
+        return Utils.makeTextNiceAgain(stringBuilder.toString().replace(" ", "_").replace(",", ""));
+    }
+
     public boolean ismIsOnLocalStorage() {
         return mIsOnLocalStorage;
     }
@@ -124,32 +147,35 @@ public class Song implements Parcelable {
         return mDateAdded;
     }
 
-    public File getmSongFileSkenOrGen() {
-        return mSongFileSkenOrGen;
+    public File getmSongFileSmall() {
+        return mSongFileSmall;
     }
 
     /**
      * Generates the expected file name of its object
-     * @param highQuality Choose whether to generate the name of a high-quality PDF (generated where available)
+     *
+     * @param originalQuality Choose whether to show the high quality image with my notes
      * @return The file name
      */
-    public String getFileName(boolean highQuality) {
+    public String getFileName(boolean originalQuality) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(this.mArtist);
         stringBuilder.append("_");
         stringBuilder.append(this.mTitle);
-        if (mHasPDFgen) {
-            stringBuilder.append("-gen");
-        } else if (highQuality) {
-            stringBuilder.append("-sken");
+        if (originalQuality) {
+            stringBuilder.append("-sken.pdf");
+        } else if (mHasPDFgen) {
+            stringBuilder.append("-gen.pdf");
         } else {
-            stringBuilder.append("-comp");
+            stringBuilder.append("-comp.pdf");
         }
-        stringBuilder.append(".pdf");
         return Utils.makeTextNiceAgain(stringBuilder.toString().replace(" ", "_").replace(",", ""));
     }
 
-    //Generated methods for comparing two songs
+    /**
+     * Generated methods for comparing two songs
+     */
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

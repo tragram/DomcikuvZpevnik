@@ -47,9 +47,9 @@ public class OneSongDownloadIS extends IntentService {
     public static String DownloadSong(Context context, Song song) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
         if (cm.isActiveNetworkMetered()) {
-            return Download(context, PDF_DIR + song.getFileName(false), song.getmSongFileComp());
+            return Download(context, PDF_DIR + song.getFileName(false), song.getmSongFileSmall());
         } else {
-            return Download(context, PDF_DIR + song.getFileName(true), song.getmSongFileSkenOrGen());
+            return Download(context, PDF_DIR + song.getFileName(true), song.getmSongFileOriginal());
         }
     }
 
