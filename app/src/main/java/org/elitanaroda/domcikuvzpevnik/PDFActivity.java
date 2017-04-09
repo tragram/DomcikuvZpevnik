@@ -28,14 +28,34 @@ import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle;
 
 import java.io.File;
 
+/**
+ * This activity shows the user a PDF files, which it possible also downloads beforehand
+ */
 public class PDFActivity extends AppCompatActivity {
+    /**
+     * The constant SONG_KEY.
+     */
     public static final String SONG_KEY = "songObject";
+    /**
+     * The constant SONG_ARRAY_KEY.
+     */
     public static final String SONG_ARRAY_KEY = "songObjectArray";
+    /**
+     * The constant MESSAGE_KEY.
+     */
     public static final String MESSAGE_KEY = "message";
+    /**
+     * The constant RETRY_KEY.
+     */
     public static final String RETRY_KEY = "retry";
+    /**
+     * The constant FILES_ROOT_KEY.
+     */
+    public static final String FILES_ROOT_KEY = "filesRoot";
     private static final String DOWNLOADING_FRAGMENT_TAG = "downloadingFragment";
     private static final String TAG = "PDFViewActivity";
 
+    private String mFilesRootUrl;
     private Song mSong;
     private Context mContext;
     private Menu mMenu;
@@ -100,7 +120,7 @@ public class PDFActivity extends AppCompatActivity {
     /**
      * Checks if there's internet connection
      *
-     * @param context
+     * @param context the context
      * @return Returns true on internet connection available
      */
     public static boolean hasInternetConnection(Context context) {
@@ -129,6 +149,7 @@ public class PDFActivity extends AppCompatActivity {
         //Show the song
         Intent intent = getIntent();
         mSong = intent.getParcelableExtra(SONG_KEY);
+        mFilesRootUrl = intent.getStringExtra(FILES_ROOT_KEY);
         showSong(mSong);
     }
 
@@ -156,6 +177,7 @@ public class PDFActivity extends AppCompatActivity {
     private void downloadSong(Song song) {
         Intent serviceIntent = new Intent(this, OneSongDownloadIS.class);
         serviceIntent.putExtra(SONG_KEY, song);
+        serviceIntent.putExtra(FILES_ROOT_KEY, mFilesRootUrl);
         this.startService(serviceIntent);
         DownloadDialogFragment downloadDialogFragment = new DownloadDialogFragment();
         downloadDialogFragment.show(getFragmentManager(), DOWNLOADING_FRAGMENT_TAG);
@@ -220,13 +242,6 @@ public class PDFActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_settings:
-                SettingsFragment settingsFragment = new SettingsFragment();
-                getFragmentManager().beginTransaction()
-                        .replace(R.id.frame, settingsFragment)
-                        .addToBackStack("SettingsFragment")
-                        .commit();
-                return true;
             case R.id.youtube:
                 new SearchAndOpenYT(this).openYoutubeVideo(mSong);
                 break;

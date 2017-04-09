@@ -3,15 +3,26 @@
     <CheckBoxPreference
         android:defaultValue="true"
         android:key="keepFiles"
-        android:summary="The easiest way of saving your data plan \nWarning: Unchecking this WILL delete all of your files!"
+        android:summary="The easiest way of saving your data plan. :) \nWarning: Unchecking this WILL delete all of your files!"
         android:title="Keep files"/>
     <Preference
         android:key="plsDownloadAll"
-        android:summary="Downloads all songs available for offline use later."
+        android:summary="Downloads all songs to local storage."
         android:title="Save songs"/>
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="randomIgnoresLanguage"
-        android:summary="On opening randomly a song,\nignore language preferences"
-        android:title="Ignore language on random"/>
+        android:summary="When opening randomly a song,\nignore language preferences"
+        android:title="Random ignores languages"/>
+    <PreferenceCategory
+        android:key="dev"
+        android:title="Developer options">
+        <EditTextPreference
+            android:defaultValue="http://elitanaroda.org/zpevnik/Zpevnik/api.php"
+            android:dialogMessage="Input the URL of the api.php. Please restart the app afterwards."
+            android:dialogTitle="API URL"
+            android:key="serverConfig"
+            android:summary="URL of the api.php file"
+            android:title="API URL"/>
+    </PreferenceCategory>
 </PreferenceScreen>

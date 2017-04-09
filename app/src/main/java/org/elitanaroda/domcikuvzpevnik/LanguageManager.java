@@ -9,8 +9,11 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
+/*
  * Created by Dominik on 2/3/2017.
+*/
+
+/**
  * Class used for managing languages in use to sort the list and saving/loading the settings
  */
 
@@ -18,6 +21,11 @@ public class LanguageManager {
     private static final String TAG = "LanguageManager";
     private Context mContext;
 
+    /**
+     * Instantiates a new Language manager.
+     *
+     * @param context the context
+     */
     public LanguageManager(Context context) {this.mContext = context;}
 
     /**
@@ -26,7 +34,7 @@ public class LanguageManager {
      * @param language The string to convert
      * @return The corresponding enum. Note: On unknown string returns "OTHER"
      */
-    private static LanguageEnum toLanguageEnum(String language) {
+    public static LanguageEnum toLanguageEnum(String language) {
         try {
             return LanguageEnum.valueOf(language);
         } catch (Exception e) {
@@ -34,8 +42,18 @@ public class LanguageManager {
         }
     }
 
+    /**
+     * Gets language preferences.
+     *
+     * @return the language preferences
+     */
     public EnumSet<LanguageEnum> getLanguagePreferences() {return loadLanguagePreferences();}
 
+    /**
+     * Save languages.
+     *
+     * @param languagesToSave the languages to save
+     */
     public void saveLanguages(EnumSet<LanguageEnum> languagesToSave) {saveLanguagePreferences(languagesToSave);}
 
     private EnumSet<LanguageEnum> loadLanguagePreferences() {
@@ -64,5 +82,25 @@ public class LanguageManager {
         editor.apply();
     }
 
-    public enum LanguageEnum {CZECH, ENGLISH, SLOVAK, SPANISH, OTHER}
+    /**
+     * The enum Language enum.
+     */
+    public enum LanguageEnum {
+        /**
+         * Czech language enum.
+         */
+        CZECH, /**
+         * English language enum.
+         */
+        ENGLISH, /**
+         * Slovak language enum.
+         */
+        SLOVAK, /**
+         * Spanish language enum.
+         */
+        SPANISH, /**
+         * Other language enum.
+         */
+        OTHER
+    }
 }

@@ -7,8 +7,11 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
-/**
+/*
  * Created by Dominik on 2/1/2017.
+ */
+
+/**
  * Filters the list according to the settings and query (if provided).
  */
 
@@ -19,6 +22,9 @@ public class FilterSongList {
     private String query;
     private onFilterDone onFilterDoneListener;
 
+    /**
+     * Instantiates a new Filter song list.
+     */
     public FilterSongList() {}
 
     /**
@@ -47,7 +53,8 @@ public class FilterSongList {
 
     /**
      * When no query is provided, uses the previous query
-     * @param mSongList A list of Songs to go through
+     *
+     * @param mSongList   A list of Songs to go through
      * @param languageEna Languages to keep
      */
     public void filter(List<Song> mSongList, EnumSet<LanguageManager.LanguageEnum> languageEna) {
@@ -55,10 +62,11 @@ public class FilterSongList {
     }
 
     /**
+     * Filter.
      *
-     * @param mSongList A list of Songs to go through
+     * @param mSongList   A list of Songs to go through
      * @param languageEna Languages to keep
-     * @param query The string to look for in the artist and the title fields
+     * @param query       The string to look for in the artist and the title fields
      */
     public void filter(List<Song> mSongList, EnumSet<LanguageManager.LanguageEnum> languageEna, String query) {
         this.mSongList = mSongList;
@@ -85,13 +93,22 @@ public class FilterSongList {
 
     /**
      * Allows for an activity to register for a message when the background proccess ends
+     *
      * @param listener Called when the background task is finished
      */
     public void setOnFilterDoneListener(onFilterDone listener) {
         this.onFilterDoneListener = listener;
     }
 
+    /**
+     * The interface On filter done.
+     */
     interface onFilterDone {
+        /**
+         * On filter.
+         *
+         * @param songs the songs
+         */
         void onFilter(List<Song> songs);
     }
 

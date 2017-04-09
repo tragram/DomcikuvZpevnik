@@ -8,25 +8,31 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Dominik on 09.12.2016.
- * Class used to read the DB
+/*
+ * Created by Dominik Hodan on 09.12.2016.
  */
 
+/**
+ * Class used to read the DB and save it to an array
+ */
 public class DBHelper extends SQLiteOpenHelper {
+    /**
+     * The constant DB_NAME.
+     */
     public static final String DB_NAME = "FinalDB.db";
     private static String TAG = "ZpevnikHelper";
     private final Context mContext;
     private SQLiteDatabase mDataBase;
 
-    //Konstruktor
+    /**
+     * Instantiates a new Db helper.
+     *
+     * @param context the context
+     */
+//Konstruktor
     public DBHelper(Context context) {
         super(context, DB_NAME, null, 1);
         this.mContext = context;
@@ -37,7 +43,7 @@ public class DBHelper extends SQLiteOpenHelper {
      *
      * @return The db folder directory path
      */
-    private String getDBPath() {
+    public String getDBPath() {
         File dbDir = new File(mContext.getFilesDir() + File.separator + "db");
         if (!dbDir.isDirectory())
             dbDir.mkdirs();
@@ -56,6 +62,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     /**
      * Queries the DB for data and creates the Song objects
+     *
      * @return An array list of all the songs in the DB
      */
     public List<Song> getAllSongs() {
@@ -66,6 +73,7 @@ public class DBHelper extends SQLiteOpenHelper {
             res.moveToFirst();
 
             //Vytvorime ArrayList objektu pisnicek pro RecyclerView
+            int id = res.getColumnIndex("_id");
             int titleColumn = res.getColumnIndex("Title");
             int artistColumn = res.getColumnIndex("Artist");
             int addedOnColumn = res.getColumnIndex("AddedOn");
@@ -76,7 +84,7 @@ public class DBHelper extends SQLiteOpenHelper {
             while (!res.isAfterLast()) {
                 Song song = new Song(
                         mContext,
-                        res.getInt(0), //res.getColumnIndex("_id")
+                        res.getInt(id),
                         res.getString(titleColumn),
                         res.getString(artistColumn),
                         res.getInt(addedOnColumn),

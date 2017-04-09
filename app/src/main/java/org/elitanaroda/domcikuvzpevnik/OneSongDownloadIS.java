@@ -18,21 +18,31 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- * Class used for downloading an array of Songs contained within the intent
+ * Class used for downloading a Song contained within the intent
  */
-
 public class OneSongDownloadIS extends IntentService {
     private static final String TAG = "OneSongDownloadService";
     private static final String PREFIX = "org.elitanaroda.domkvzpvnk.downloadsongintentservice";
+    /**
+     * The constant BROADCAST_DOWNLOAD_FINISHED.
+     */
     public static final String BROADCAST_DOWNLOAD_FINISHED = PREFIX + ".FINISHED";
+    /**
+     * The constant BROADCAST_SHOW_ERROR.
+     */
     public static final String BROADCAST_SHOW_ERROR = PREFIX + ".SHOW";
+    /**
+     * The constant BROADCAST_PROGRESS_UPDATE.
+     */
     public static final String BROADCAST_PROGRESS_UPDATE = PREFIX + ".PROGRESS";
 
-    private static final String PDF_DIR = "http://elitanaroda.org/zpevnik/pdfs/";
     private Song mSong;
     private PowerManager.WakeLock mWakeLock;
     private String result;
 
+    /**
+     * Instantiates a new One song download is.
+     */
     public OneSongDownloadIS() {
         super("OneSongDownloadIS");
     }
@@ -42,9 +52,10 @@ public class OneSongDownloadIS extends IntentService {
      *
      * @param context App context
      * @param song    Song to download
+     * @param PDF_DIR the pdf dir
      * @return Null on successful download
      */
-    public static String DownloadSong(Context context, Song song) {
+    public static String DownloadSong(Context context, Song song, String PDF_DIR) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
         if (cm.isActiveNetworkMetered()) {
             return Download(context, PDF_DIR + song.getFileName(false), song.getmSongFileSmall());
@@ -55,8 +66,9 @@ public class OneSongDownloadIS extends IntentService {
 
     /**
      * A very general method for downloading any file, broadcasts progress update
-     * @param context App context
-     * @param urlToDownload URL where the file is
+     *
+     * @param context        App context
+     * @param urlToDownload  URL where the file is
      * @param downloadToFile Where the file should be saved
      * @return Null on successful download
      */
@@ -126,9 +138,10 @@ public class OneSongDownloadIS extends IntentService {
 
         result = null;
 
+        String PDF_DIR = intent.getStringExtra(PDFActivity.FILES_ROOT_KEY);
         if (intent.hasExtra(PDFActivity.SONG_KEY)) {
             this.mSong = intent.getParcelableExtra(PDFActivity.SONG_KEY);
-            result = DownloadSong(this, mSong);
+            result = DownloadSong(this, mSong, PDF_DIR);
             if (result == null) {
                 sendFinishedBroadcast();
             } else

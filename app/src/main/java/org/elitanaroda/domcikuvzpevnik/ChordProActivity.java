@@ -22,8 +22,10 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
 
+/**
+ * This activity presents the user with a song in the ChordPro format, which it also downloads beforehand
+ */
 public class ChordProActivity extends AppCompatActivity {
-
     private static final String TAG = "ChordProActivity";
     private TextView mChordProContentTV;
     private Song mSong;
@@ -42,7 +44,8 @@ public class ChordProActivity extends AppCompatActivity {
         mChordProSV = (ScrollView) findViewById(R.id.chordProSV);
         Intent intent = getIntent();
         mSong = intent.getParcelableExtra(PDFActivity.SONG_KEY);
-        new LoadChordPro().execute("http://elitanaroda.org/zpevnik/pdfs/" + mSong.getChordProFileName());
+        String mFilesRootUrl = intent.getStringExtra(PDFActivity.FILES_ROOT_KEY);
+        new LoadChordPro().execute(mFilesRootUrl + mSong.getChordProFileName());
     }
 
     /**

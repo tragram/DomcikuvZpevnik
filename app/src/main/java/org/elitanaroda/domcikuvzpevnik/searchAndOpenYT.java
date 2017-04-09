@@ -20,8 +20,11 @@ import com.google.api.services.youtube.model.SearchResult;
 import java.io.IOException;
 import java.util.List;
 
-/**
+/*
  * Created by Dominik on 2/2/2017.
+ */
+
+/**
  * Class used for showing the first video on the query provided
  */
 
@@ -31,8 +34,18 @@ public class SearchAndOpenYT {
     private YouTube youtube;
     private Context mContext;
 
+    /**
+     * Instantiates a new Search and open yt.
+     *
+     * @param context the context
+     */
     public SearchAndOpenYT(Context context) {this.mContext = context;}
 
+    /**
+     * Open youtube video.
+     *
+     * @param songToLookUp the song to look up
+     */
     public void openYoutubeVideo(Song songToLookUp) {
         new openYoutube().execute(songToLookUp.getmArtist() + " - " + songToLookUp.getmTitle());
     }

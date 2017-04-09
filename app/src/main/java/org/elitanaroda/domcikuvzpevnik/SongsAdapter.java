@@ -15,7 +15,6 @@ import java.util.List;
 /**
  * Adapter used with the MainActivity RecyclerView
  */
-
 public class SongsAdapter extends
         RecyclerView.Adapter<SongsAdapter.ViewHolder> {
     private final String TAG = "SongsAdapter";
@@ -59,6 +58,13 @@ public class SongsAdapter extends
     private Context mContext;
     private OnItemClickListener listener;
     private SortedList<Song> mSongs;
+
+    /**
+     * Instantiates a new Songs adapter.
+     *
+     * @param context    the context
+     * @param comparator the comparator
+     */
     public SongsAdapter(Context context, Comparator<Song> comparator) {
         //this.mSongs = songs;
         this.mContext = context;
@@ -66,7 +72,12 @@ public class SongsAdapter extends
         mSongs = new SortedList<>(Song.class, mCallback);
     }
 
-    //Define the method that allows the parent activity or fragment to define the listener
+    /**
+     * Sets on item click listener.
+     *
+     * @param listener the listener
+     */
+//Define the method that allows the parent activity or fragment to define the listener
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
     }
@@ -118,6 +129,7 @@ public class SongsAdapter extends
 
     /**
      * Removes provided songs from the list
+     *
      * @param songs Songs to be removed
      */
     public void remove(List<Song> songs) {
@@ -130,6 +142,7 @@ public class SongsAdapter extends
 
     /**
      * Efficiently replace the old list with the new
+     *
      * @param songs The new list of Songs to be shown
      */
     public void replaceAll(List<Song> songs) {
@@ -144,17 +157,46 @@ public class SongsAdapter extends
         mSongs.endBatchedUpdates();
     }
 
-    // Define the listener interface
+    /**
+     * The interface On item click listener.
+     */
+// Define the listener interface
     public interface OnItemClickListener {
+        /**
+         * On item click.
+         *
+         * @param itemView the item view
+         * @param song     the song
+         */
         void onItemClick(View itemView, Song song);
     }
 
+    /**
+     * The type View holder.
+     */
     public class ViewHolder extends RecyclerView.ViewHolder {
+        /**
+         * The Title text view.
+         */
         public TextView titleTextView;
+        /**
+         * The Artist text view.
+         */
         public TextView artistTextView;
+        /**
+         * The Yt button.
+         */
         public ImageButton YTButton;
+        /**
+         * The Checkmark iv.
+         */
         public ImageView checkmarkIV;
 
+        /**
+         * Instantiates a new View holder.
+         *
+         * @param songItemView the song item view
+         */
         public ViewHolder(final View songItemView) {
             super(songItemView);
             this.titleTextView = (TextView) songItemView.findViewById(R.id.title);

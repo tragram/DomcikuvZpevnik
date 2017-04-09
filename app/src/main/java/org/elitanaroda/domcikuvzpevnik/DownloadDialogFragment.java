@@ -20,6 +20,9 @@ public class DownloadDialogFragment extends DialogFragment {
     private static final String TAG = "DownloadDialogFragment";
     private NumberProgressBar numberProgressBar;
 
+    /**
+     * Instantiates a new Download dialog fragment.
+     */
     public DownloadDialogFragment() {}
 
     @Override

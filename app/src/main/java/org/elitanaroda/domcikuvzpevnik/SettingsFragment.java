@@ -22,21 +22,44 @@ import android.view.ViewGroup;
 import java.io.File;
 import java.util.List;
 
+/**
+ * Fragment used to manage the settings
+ */
 public class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
     private final String TAG = "SettingsFragment";
+    /**
+     * The Download all.
+     */
     Preference downloadAll;
+    /**
+     * The Keep files.
+     */
     CheckBoxPreference keepFiles;
     private SharedPreferences sharedPref;
     private Context mContext;
     private OnDeleteSongs onDeleteSongsListener;
+    private String mFilesRootUrl;
 
-    public static void downloadAllSongs(Context context, List<Song> songList) {
+    /**
+     * Download all songs.
+     *
+     * @param context       the context
+     * @param songList      the song list
+     * @param mFilesRootUrl the m files root url
+     */
+    public static void downloadAllSongs(Context context, List<Song> songList, String mFilesRootUrl) {
         Song[] songArray = songList.toArray(new Song[songList.size()]);
         Intent serviceIntent = new Intent(context, MoreSongsDownloadIS.class);
         serviceIntent.putExtra(PDFActivity.SONG_ARRAY_KEY, songArray).putExtra("openPDF", false);
+        serviceIntent.putExtra(PDFActivity.FILES_ROOT_KEY, mFilesRootUrl);
         context.startService(serviceIntent);
     }
 
+    /**
+     * Sets on delete songs listener.
+     *
+     * @param listener the listener
+     */
     public void setOnDeleteSongsListener(OnDeleteSongs listener) {this.onDeleteSongsListener = listener;}
 
     @Override
@@ -63,7 +86,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
                     builder.setMessage("You are not connected to WiFi. \nThis will action consume 290MB! \nAre you sure? ");
                     builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                            downloadAllSongs(mContext, ((MainActivity) getActivity()).getmSongList());
+                            downloadAllSongs(mContext, ((MainActivity) getActivity()).getmSongList(), mFilesRootUrl);
                         }
                     });
                     builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -71,13 +94,12 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
                             // User cancelled the dialog
                         }
                     });
-                    // Set other dialog properties
 
                     // Create the AlertDialog
                     AlertDialog dialog = builder.create();
                     dialog.show();
                 } else {
-                    downloadAllSongs(mContext, ((MainActivity) getActivity()).getmSongList());
+                    downloadAllSongs(mContext, ((MainActivity) getActivity()).getmSongList(), mFilesRootUrl);
                 }
                 return true;
             }
@@ -87,6 +109,8 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = super.onCreateView(inflater, container, savedInstanceState);
+        Bundle args = this.getArguments();
+        mFilesRootUrl = args.getString(PDFActivity.FILES_ROOT_KEY);
         if (view != null)
             view.setBackgroundColor(Color.WHITE);
         return view;
@@ -118,7 +142,13 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         }
     }
 
+    /**
+     * The interface On delete songs.
+     */
     interface OnDeleteSongs {
+        /**
+         * Reload songs.
+         */
         void reloadSongs();
     }
 }

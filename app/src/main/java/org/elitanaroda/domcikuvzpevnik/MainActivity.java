@@ -3,7 +3,6 @@ package org.elitanaroda.domcikuvzpevnik;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -21,7 +20,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import java.io.File;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collections;
@@ -30,17 +32,13 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Random;
 
-/**
- * @author Dominik Hodan
- */
-/*
-Global TODO:
-NFC send song
-permissions
-chci zas v tobě spát je pochybný
-*/
-//<div>Icons made by <a href="http://www.flaticon.com/authors/dimi-kazak" title="Dimi Kazak">Dimi Kazak</a> from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
+import static org.elitanaroda.domcikuvzpevnik.Utils.getJSONObjectFromURL;
 
+/**
+ * The type Main activity.
+ *
+ * @author Dominik Hodan         This is the main activity, where the user can browse the database
+ */
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener, FilterSongList.onFilterDone, SettingsFragment.OnDeleteSongs {
     private static String TAG = "Main";
     private DBHelper mDBHelper;
@@ -53,7 +51,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private SearchView mSearchView;
     private FilterSongList mFilterSongList;
     private SongComparator<Song> mCurrentComparator;
-
     /**
      * Reacts to user changing the sort settings
      */
@@ -80,6 +77,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             return true;
         }
     };
+    private String mDbUrl;
+    private String mFilesRootUrl;
     private ComparatorManager mComparatorManager;
     private LanguageManager mLanguageManager;
     private PopupMenu sortPopupMenu;
@@ -124,7 +123,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     /**
      * Sets the title "Domcikuv Zpevnik" with the correct formatting to the provided toolbar
      *
-     * @param context
+     * @param context the context
      * @param toolbar The toolbar you want to apply the header to
      * @return Returns the customized toolbar.
      */
@@ -136,6 +135,11 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         return toolbar;
     }
 
+    /**
+     * Gets song list.
+     *
+     * @return the song list
+     */
     public List<Song> getmSongList() {
         return mSongList;
     }
@@ -247,7 +251,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             @Override
             public void onItemClick(View view, Song song) {
                 if (view.getId() != R.id.YTButton) {
-                    openPDFDocument(song);
+                    openSongDocument(song);
                 } else {
                     new SearchAndOpenYT(mContext).openYoutubeVideo(song);
                 }
@@ -311,6 +315,9 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             case R.id.action_settings:
                 //Show the settings fragment
                 SettingsFragment settingsFragment = new SettingsFragment();
+                Bundle args = new Bundle();
+                args.putString(PDFActivity.FILES_ROOT_KEY, mFilesRootUrl);
+                settingsFragment.setArguments(args);
                 settingsFragment.setOnDeleteSongsListener(this);
                 getFragmentManager().beginTransaction()
                         .replace(R.id.chordProContent, settingsFragment)
@@ -368,7 +375,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             randomSong = mSongList.get(randomGenerator.nextInt(mSongList.size()));
 
         if (hasInternetConnection || randomSong.ismIsOnLocalStorage()) {
-            openPDFDocument(randomSong);
+            openSongDocument(randomSong);
         } else {
             Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
                     "Random song not available on local storage and you are offline :(   Better luck next time!",
@@ -428,15 +435,16 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     }
 
     /**
-     * Opens a new PDFActivity showing the selected document.
+     * Opens a new PDFActivity or a ChordProActivity showing the selected document.
      *
      * @param song Song to open.
      */
-    public void openPDFDocument(Song song) {
+    public void openSongDocument(Song song) {
         //We won't be downloading this
         if (song.hasChordPro() && PDFActivity.hasInternetConnection(this)) {
             Intent intent = new Intent(this, ChordProActivity.class);
             intent.putExtra(PDFActivity.SONG_KEY, song);
+            intent.putExtra(PDFActivity.FILES_ROOT_KEY, mFilesRootUrl);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
         } else {
@@ -445,28 +453,50 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             song.setmIsOnLocalStorage(sharedPref.getBoolean("keepFiles", true));
 
             Intent intent = new Intent(this, PDFActivity.class);
+            intent.putExtra(PDFActivity.FILES_ROOT_KEY, mFilesRootUrl);
             intent.putExtra(PDFActivity.SONG_KEY, song);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
         }
     }
 
+
     /**
-     * Updates the database, shows a popup on update or fail to check
+     * Updates the database, shows a popup on update or a failure to check
      */
     private class UpdateDB extends AsyncTask<Void, Void, String> {
-        public static final String DB_URL = "http://elitanaroda.org/zpevnik/FinalDB.db";
+        /**
+         * The Db dir.
+         */
         public File dbDir = new File(getFilesDir() + File.separator + "db");
 
+        /**
+         * The Local db.
+         */
         File localDB;
 
         @Override
         protected String doInBackground(Void... params) {
+            SharedPreferences languagePreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+            String API_URL = languagePreferences.getString("serverConfig", null);
+
             try {
-                if (!dbDir.isDirectory())
+                JSONObject serverConfig = getJSONObjectFromURL(API_URL);
+                JSONObject data = serverConfig.getJSONObject("data");
+                mDbUrl = data.getString("database_location");
+                mFilesRootUrl = data.getString("files_location");
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                if (!dbDir.isDirectory()) {
                     dbDir.mkdirs();
+                }
                 localDB = new File(dbDir, DBHelper.DB_NAME);
-                URL url = new URL(DB_URL);
+                URL url = new URL(mDbUrl);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 Long serverDBLastModified = connection.getLastModified();
                 Log.v(TAG, connection.getHeaderFields().toString());
@@ -475,10 +505,11 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
                 //Only download if the db has been updated
                 if (localDB.lastModified() < serverDBLastModified) {
-                    if (OneSongDownloadIS.Download(getBaseContext(), DB_URL, localDB) == null)
+                    if (OneSongDownloadIS.Download(getBaseContext(), mDbUrl, localDB) == null) {
                         return "Database updated";
-                    else
+                    } else {
                         return "Error updating the DB";
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();

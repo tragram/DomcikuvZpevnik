@@ -7,10 +7,12 @@ import android.os.Parcelable;
 import java.io.File;
 
 /**
- * The class responsible for one record of a "song"
+ * The class responsible for one record of a "song", includes all the data from the DB and also creates file names
  */
-
 public class Song implements Parcelable {
+    /**
+     * The constant CREATOR.
+     */
     public static final Parcelable.Creator<Song> CREATOR = new Parcelable.Creator<Song>() {
 
         public Song createFromParcel(Parcel in) {
@@ -33,12 +35,24 @@ public class Song implements Parcelable {
     private File mSongFileSmall;
     private File mSongFileOriginal;
 
+    /**
+     * Instantiates a new Song.
+     *
+     * @param context     the context
+     * @param id          the id
+     * @param title       the title
+     * @param artist      the artist
+     * @param dateAdded   the date added
+     * @param language    the language
+     * @param hasPDFgen   the has pd fgen
+     * @param hasChordPro the has chord pro
+     */
     public Song(Context context, int id, String title, String artist, int dateAdded, String language, int hasPDFgen, int hasChordPro) {
         this.mId = id;
         this.mTitle = title;
         this.mArtist = artist;
         this.mDateAdded = dateAdded;
-        this.mLanguage = LanguageManager.LanguageEnum.valueOf(language);
+        this.mLanguage = LanguageManager.toLanguageEnum(language);
         if (hasPDFgen == 0) {
             this.mHasPDFgen = false;
         } else {
@@ -101,31 +115,66 @@ public class Song implements Parcelable {
         return 0;
     }
 
+    /**
+     * Gets song file original.
+     *
+     * @return the song file original
+     */
     public File getmSongFileOriginal() {
         return mSongFileOriginal;
     }
 
+    /**
+     * Gets id.
+     *
+     * @return the id
+     */
     public int getmId() {
         return mId;
     }
 
+    /**
+     * Gets title.
+     *
+     * @return the title
+     */
     public String getmTitle() {
         return mTitle;
     }
 
+    /**
+     * Gets artist.
+     *
+     * @return the artist
+     */
     public String getmArtist() {
         return mArtist;
     }
 
+    /**
+     * Gets language.
+     *
+     * @return the language
+     */
     public LanguageManager.LanguageEnum getmLanguage() {
         return mLanguage;
     }
 
 
+    /**
+     * Has chord pro boolean.
+     *
+     * @return the boolean
+     */
     public boolean hasChordPro() {
         return mHasChordPro;
     }
 
+    /**
+     * Gets chord pro file name.
+     *
+     * @return the chord pro file name
+     */
     public String getChordProFileName() {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(this.mArtist);
@@ -135,18 +184,38 @@ public class Song implements Parcelable {
         return Utils.makeTextNiceAgain(stringBuilder.toString().replace(" ", "_").replace(",", ""));
     }
 
+    /**
+     * Ism is on local storage boolean.
+     *
+     * @return the boolean
+     */
     public boolean ismIsOnLocalStorage() {
         return mIsOnLocalStorage;
     }
 
+    /**
+     * Sets is on local storage.
+     *
+     * @param mIsOnLocalStorage the m is on local storage
+     */
     public void setmIsOnLocalStorage(boolean mIsOnLocalStorage) {
         this.mIsOnLocalStorage = mIsOnLocalStorage;
     }
 
+    /**
+     * Gets date added.
+     *
+     * @return the date added
+     */
     public int getmDateAdded() {
         return mDateAdded;
     }
 
+    /**
+     * Gets song file small.
+     *
+     * @return the song file small
+     */
     public File getmSongFileSmall() {
         return mSongFileSmall;
     }

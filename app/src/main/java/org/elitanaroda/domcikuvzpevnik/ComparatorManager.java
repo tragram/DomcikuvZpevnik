@@ -7,13 +7,19 @@ import android.util.Log;
 
 import java.text.Normalizer;
 
-/**
+/*
  * Created by Dominik on 2/3/2017.
+ */
+
+/**
  * Class used for managing comparators in use to sort the list and saving/loading the settings
  */
 
 public class ComparatorManager {
-    //Sorts the list alphabetically by title
+    /**
+     * The constant ALPHABETICAL_BY_TITLE.
+     */
+//Sorts the list alphabetically by title
     public static final SongComparator<Song> ALPHABETICAL_BY_TITLE = new SongComparator<Song>(0) {
         @Override
         public int compare(Song o1, Song o2) {
@@ -21,7 +27,10 @@ public class ComparatorManager {
                     compareTo(Normalizer.normalize(o2.getmTitle(), Normalizer.Form.NFD));
         }
     };
-    //Sorts the list alphabetically by artist
+    /**
+     * The constant ALPHABETICAL_BY_ARTIST.
+     */
+//Sorts the list alphabetically by artist
     public static final SongComparator<Song> ALPHABETICAL_BY_ARTIST = new SongComparator<Song>(1) {
         @Override
         public int compare(Song o1, Song o2) {
@@ -30,7 +39,10 @@ public class ComparatorManager {
         }
     };
 
-    //Sorts the list by date, newest first
+    /**
+     * The constant BY_DATE.
+     */
+//Sorts the list by date, newest first
     //On same date, sorts it alphabetically by title
     public static final SongComparator<Song> BY_DATE = new SongComparator<Song>(2) {
         @Override
@@ -45,12 +57,27 @@ public class ComparatorManager {
     private static final String TAG = "ComparatorManager";
     private Context mContext;
 
+    /**
+     * Instantiates a new Comparator manager.
+     *
+     * @param context the context
+     */
     public ComparatorManager(Context context) {
         this.mContext = context;
     }
 
+    /**
+     * Gets comparator preferences.
+     *
+     * @return the comparator preferences
+     */
     public SongComparator<Song> getComparatorPreferences() {return loadComparatorPreferences();}
 
+    /**
+     * Save comparator.
+     *
+     * @param songComparator the song comparator
+     */
     public void saveComparator(SongComparator<Song> songComparator) {saveComparatorPreferences(songComparator);}
 
     private void saveComparatorPreferences(SongComparator<Song> songComparator) {

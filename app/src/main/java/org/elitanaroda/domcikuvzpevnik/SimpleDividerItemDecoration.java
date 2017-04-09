@@ -7,8 +7,11 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
-/**
+/*
  * Created by Dominik on 12/24/2016.
+ */
+
+/**
  * Defining the divider lines in the RecyclerView in MainActivity
  * Nothing worth watching
  */
@@ -16,6 +19,11 @@ import android.view.View;
 public class SimpleDividerItemDecoration extends RecyclerView.ItemDecoration {
     private Drawable mDivider;
 
+    /**
+     * Instantiates a new Simple divider item decoration.
+     *
+     * @param context the context
+     */
     public SimpleDividerItemDecoration(Context context) {
         mDivider = ContextCompat.getDrawable(context, R.drawable.line_divider);
     }

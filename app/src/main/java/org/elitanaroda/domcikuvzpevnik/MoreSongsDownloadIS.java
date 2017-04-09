@@ -25,13 +25,15 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- * Class used for download the song within the intent
+ * Class used for download an array of Songs contained within the intent
  */
 public class MoreSongsDownloadIS extends IntentService {
     private static final String TAG = "MoreSongsDownloadService";
     private static final String PREFIX = "org.elitanaroda.domkvzpvnk.downloadsongintentservice";
+    /**
+     * The constant BROADCAST_STOP_BATCH_DOWNLOAD.
+     */
     public static final String BROADCAST_STOP_BATCH_DOWNLOAD = PREFIX + ".STOP";
-    private static final String PDF_DIR = "http://elitanaroda.org/zpevnik/pdfs/";
     private final static int NOTIFICATION_ID = 12;
     private PowerManager.WakeLock mWakeLock;
     private NotificationCompat.Builder mBuilder;
@@ -39,6 +41,9 @@ public class MoreSongsDownloadIS extends IntentService {
     private String result;
     private boolean aborted = false;
 
+    /**
+     * Instantiates a new More songs download is.
+     */
     public MoreSongsDownloadIS() {
         super("MoreSongsDownloadIS");
     }
@@ -48,21 +53,23 @@ public class MoreSongsDownloadIS extends IntentService {
      *
      * @param context App context
      * @param song    Song to download
+     * @param pdfDir  the pdf dir
      * @return Null on successful download
      */
-    public static String DownloadSong(Context context, Song song) {
+    public static String DownloadSong(Context context, Song song, String pdfDir) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
         if (cm.isActiveNetworkMetered()) {
-            return Download(context, PDF_DIR + song.getFileName(false), song.getmSongFileSmall());
+            return Download(context, pdfDir + song.getFileName(false), song.getmSongFileSmall());
         } else {
-            return Download(context, PDF_DIR + song.getFileName(true), song.getmSongFileOriginal());
+            return Download(context, pdfDir + song.getFileName(true), song.getmSongFileOriginal());
         }
     }
 
     /**
      * A very general method for downloading any file
-     * @param context App context
-     * @param urlToDownload URL where the file is
+     *
+     * @param context        App context
+     * @param urlToDownload  URL where the file is
      * @param downloadToFile Where the file should be saved
      * @return Null on successful download
      */
@@ -136,9 +143,10 @@ public class MoreSongsDownloadIS extends IntentService {
         mWakeLock.acquire();
 
         result = null;
+        String pdfUrl = intent.getStringExtra(PDFActivity.FILES_ROOT_KEY);
         if (intent.hasExtra(PDFActivity.SONG_ARRAY_KEY)) {
             Parcelable[] parcelables = intent.getParcelableArrayExtra(PDFActivity.SONG_ARRAY_KEY);
-            downloadArray(parcelables);
+            downloadArray(parcelables, pdfUrl);
         } else {
             Log.e(TAG, "Intent didn't contain data to download");
             stopSelf();
@@ -150,7 +158,7 @@ public class MoreSongsDownloadIS extends IntentService {
      * Converts the parcelables provided into Song objects and downloads them
      * @param parcelables
      */
-    private void downloadArray(Parcelable[] parcelables) {
+    private void downloadArray(Parcelable[] parcelables, String pdfUrl) {
         int progress = 0;
         int total = parcelables.length;
         //Create the notification
@@ -169,7 +177,7 @@ public class MoreSongsDownloadIS extends IntentService {
                 }
                 //Only download if the file isn't already downloaded
                 if (!((Song) song).ismIsOnLocalStorage()) {
-                    result = DownloadSong(this, (Song) song);
+                    result = DownloadSong(this, (Song) song, pdfUrl);
                     if (result != null)
                         Log.e(TAG, ((Song) song).getFileName(true) + " not downloaded:\n" + result);
                 }
