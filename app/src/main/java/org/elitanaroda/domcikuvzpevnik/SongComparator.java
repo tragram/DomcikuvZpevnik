@@ -5,9 +5,11 @@ import android.util.Log;
 import java.util.Comparator;
 import java.util.Objects;
 
-/**
+/*
  * Created by Dominik on 2/1/2017.
- * A simple extension of the Comparator class, all its objects must have an ID, which is then used to save settings
+ */
+
+/** A simple extension of the Comparator class, all its objects must have an ID, which is then used to save settings
  *
  * @param <Song> the type parameter
  */

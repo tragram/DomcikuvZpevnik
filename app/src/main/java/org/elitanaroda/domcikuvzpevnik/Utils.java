@@ -60,7 +60,6 @@ public class Utils {
      * @param urlString URL where the JSON is
      * @return A JSON object created based on the data received
      * @throws IOException   Couldn't read the file
-     * @throws JSONException Couln't create a JSON object
      */
     public static JSONObject getJSONObjectFromURL(String urlString) throws IOException, JSONException {
 

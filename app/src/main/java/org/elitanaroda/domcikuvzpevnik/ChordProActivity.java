@@ -117,8 +117,12 @@ public class ChordProActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-            s = generateHtml(s);
-            mChordProContentTV.setText(Utils.fromHtml(s));
+            try {
+                s = generateHtml(s);
+                mChordProContentTV.setText(Utils.fromHtml(s));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }
